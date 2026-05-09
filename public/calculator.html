@@ -1080,6 +1080,7 @@ async function exportDatasheetPDF(){
   // ── Configuration summary ────────────────────────────────────────────────
   y=subHdr(y,'Sending Card Configuration');
   var altr=false;
+  var totalCab=c.qW*c.qH;
   var dfRows=[
     ['Sending Card / Processor',cardLabel],
     ['Total Sending Cards',nCards+' Unit'],
@@ -1093,7 +1094,6 @@ async function exportDatasheetPDF(){
     ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
     ['Routing Pattern','Column-based, top → bottom (per VNNOX)']
   ];
-  var totalCab=c.qW*c.qH;
   dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
 
   y+=4;
