@@ -989,13 +989,14 @@ async function exportDatasheetPDF(){
   y+=14;
 
   // ── NovaStar logic ────────────────────────────────────────────────────────
-  // Each Gigabit Ethernet port carries up to ~650,000 pixels
-  // Sending card "H_16xRJ45+2xFiber" = up to 16 RJ45 ports per card
+  // Each Gigabit Ethernet port carries up to ~650,000 pixels (cabinet RESOLUTION based)
+  // Sending card uses processor's actual RJ45 port count
   // Cabinets are routed in column-based serpentine pattern (down → up → down)
-  var cabPxCount = p.pxW * p.pxH;
-  var pxPerPort = 650000;
+  var cabPxCount = p.pxW * p.pxH;                     // px per cabinet (resolution)
+  var pxPerPort = 650000;                             // Gigabit RJ45 limit
   var cabPerPort = Math.max(1, Math.floor(pxPerPort/cabPxCount));
-  var portsPerCard = 16;
+  var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
+  var cardLabel = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
   var cabPerCard = cabPerPort * portsPerCard;
   var totalCab = c.qW * c.qH;
   var nCards = Math.max(1, Math.ceil(totalCab/cabPerCard));
