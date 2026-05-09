@@ -1174,6 +1174,12 @@ function vizRenderGrid(){
     svg+='<rect x="'+(wallX+2)+'" y="'+(wallY+2)+'" width="'+(wpW-4)+'" height="'+(wpH-4)+'" fill="none" stroke="#d8d4cc" stroke-width="0.6"/>';
   }
 
+  // ACP frame for outdoor without pole (15 cm around the screen)
+  if(isOutdoor && !hasPole){
+    var acpNP=15*sc;
+    svg+='<rect x="'+(scrX-acpNP)+'" y="'+(scrY-acpNP)+'" width="'+(spW+acpNP*2)+'" height="'+(spH+acpNP*2)+'" rx="2" fill="#9aa0a8" stroke="#5a606a" stroke-width="1" filter="url(#boardShadow)"/>';
+  }
+
   // Screen content (LED grid)
   var clipAttr=(!hasPole&&!isOutdoor)?'clip-path="url(#wClip)"':'';
   svg+='<g '+clipAttr+'>';
