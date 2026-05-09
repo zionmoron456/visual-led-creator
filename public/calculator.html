@@ -873,42 +873,27 @@ async function exportDatasheetPDF(){
   drawHeader('LED Configuration Rendering');
   y=MT+6;
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,80,80);
-  doc.text('Diagonal: '+Math.round(c.diag)+' Inch',ML,y+5);
-  y+=12;
+  doc.text('Diagonal: '+Math.round(c.diag)+' Inch  ·  Dimensions: '+(c.sW/1000).toFixed(2)+' m x '+(c.sH/1000).toFixed(2)+' m  ·  Resolution: '+c.resW+' x '+c.resH+'  ·  Aspect Ratio: '+arWr+':'+arHr,ML,y+5);
+  y+=10;
 
-  var diagX=ML+30,diagY=y,safeH=Math.min(75,(CW-30-22)*(c.sH/c.sW));
-  var scaledW=safeH*(c.sW/c.sH);
-  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.setFillColor(235,235,235);
-  doc.rect(diagX,diagY,scaledW+16,safeH+16,'FD');
-  doc.setFillColor(20,50,120);doc.rect(diagX+8,diagY+8,scaledW,safeH,'F');
-  doc.setDrawColor(70,110,200);doc.setLineWidth(0.2);
-  if(c.qW>1){for(var i=1;i<c.qW;i++){var gx=diagX+8+scaledW*(i/c.qW);doc.line(gx,diagY+8,gx,diagY+8+safeH);}}
-  if(c.qH>1){for(var j=1;j<c.qH;j++){var gy=diagY+8+safeH*(j/c.qH);doc.line(diagX+8,gy,diagX+8+scaledW,gy);}}
-  // human
-  var hx=diagX-12,hy=diagY+8,hh=Math.min(safeH*0.85,28);
-  doc.setDrawColor(100,100,100);doc.setLineWidth(0.5);
-  doc.circle(hx,hy+hh*0.07,hh*0.07,'S');
-  doc.line(hx,hy+hh*0.14,hx,hy+hh*0.6);
-  doc.line(hx-hh*0.12,hy+hh*0.25,hx+hh*0.12,hy+hh*0.25);
-  doc.line(hx,hy+hh*0.6,hx-hh*0.1,hy+hh);doc.line(hx,hy+hh*0.6,hx+hh*0.1,hy+hh);
-  doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(100,100,100);doc.text('183cm',hx-5,hy+hh+3);
-  // dimensions
-  var dY=diagY+safeH+16+6;
-  doc.setDrawColor(100,100,100);doc.setLineWidth(0.3);
-  doc.line(diagX+8,dY,diagX+8+scaledW,dY);doc.line(diagX+8,dY-2,diagX+8,dY+2);doc.line(diagX+8+scaledW,dY-2,diagX+8+scaledW,dY+2);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(0,0,0);
-  doc.text((c.sW/1000).toFixed(2)+' m',diagX+8+scaledW/2,dY+4,{align:'center'});
-  var hDX=diagX+8+scaledW+12;
-  doc.line(hDX,diagY+8,hDX,diagY+8+safeH);doc.line(hDX-2,diagY+8,hDX+2,diagY+8);doc.line(hDX-2,diagY+8+safeH,hDX+2,diagY+8+safeH);
-  doc.text((c.sH/1000).toFixed(2)+' m',hDX+2,diagY+8+safeH/2+2);
+  // Embed the live on-screen visualization (rasterized SVG) so the datasheet
+  // matches exactly what the user sees in the calculator.
+  try{
+    vizRenderGrid();
+    var snap=await svgStageToPng(2);
+    if(snap){
+      var imgW=CW;
+      var imgH=imgW*(snap.h/snap.w);
+      doc.addImage(snap.dataUrl,'PNG',ML,y,imgW,imgH);
+      y+=imgH+4;
+    }
+  }catch(e){ y+=4; }
+
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
-  doc.text('Best Viewing Distance',ML,diagY+safeH+16+13);
-  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,86,179);
-  doc.text(optView+' m',ML,diagY+safeH+16+19);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
-  doc.text('Resolution: '+c.resW+' x '+c.resH,diagX+8+scaledW/2,dY+9,{align:'center'});
-  doc.text('Aspect Ratio: '+arWr+':'+arHr,diagX+8+scaledW/2,dY+14,{align:'center'});
-  y=diagY+safeH+16+28;
+  doc.text('Best Viewing Distance',ML,y+4);
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(0,86,179);
+  doc.text(optView+' m',ML,y+10);
+  y+=14;
   doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(0,0,0);doc.text('Solution',PW/2,y,{align:'center'});
   y+=6;
   doc.setFillColor(0,86,179);doc.rect(ML,y,CW,8,'F');
