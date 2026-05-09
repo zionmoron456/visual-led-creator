@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAXHUB LED Calculator v14</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:rgba(255,255,255,0.08);--accent:#4f7cff;--accent2:#00d4aa;--text:#f0f2ff;--text2:#8b91b0;--text3:#555a78;--warn:#f5a623;--danger:#ff5e57;--tkdn:#22c55e;--nontkdn:#f59e0b;--radius:12px;--radius-sm:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:#0f1117;border-bottom:1px solid var(--border);padding:20px 40px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo{width:38px;height:38px;background:var(--accent);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:#fff}
+.header-text h1{font-size:15px;font-weight:600}
+.header-text p{font-size:12px;color:var(--text2);margin-top:1px}
+.header-badge{margin-left:auto;font-size:11px;font-family:'DM Mono',monospace;background:rgba(79,124,255,0.12);color:var(--accent);padding:4px 10px;border-radius:999px;border:1px solid rgba(79,124,255,0.25)}
+.container{max-width:1200px;margin:0 auto;padding:28px 40px}
+.layout{display:grid;grid-template-columns:390px 1fr;gap:20px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card-header{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.card-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.card-icon.blue{background:rgba(79,124,255,0.15)}
+.card-icon.teal{background:rgba(0,212,170,0.15)}
+.card-icon.amber{background:rgba(245,166,35,0.15)}
+.card-icon.green{background:rgba(0,200,100,0.15)}
+.card-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:500}
+select,input[type=number],input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+select:focus,input:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.product-info{background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.2);border-radius:var(--radius-sm);padding:10px 12px;margin-top:14px}
+.product-model{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);margin-bottom:3px}
+.product-name{font-size:12px;color:var(--text2);line-height:1.4}
+.tkdn-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:middle}
+.tkdn-badge.tkdn{background:rgba(34,197,94,0.15);color:var(--tkdn);border:1px solid rgba(34,197,94,0.3)}
+.tkdn-badge.nontkdn{background:rgba(245,158,11,0.15);color:var(--nontkdn);border:1px solid rgba(245,158,11,0.3)}
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.metric{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;border:1px solid var(--border)}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+.metric-value{font-size:20px;font-weight:600;color:var(--text)}
+.metric-sub{font-size:11px;color:var(--text2);margin-top:2px;font-family:'DM Mono',monospace}
+.screen-preview{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px}
+.viz-svg-wrap{width:100%;background:#13161f;border-radius:var(--radius-sm);overflow:hidden}
+.viz-svg-wrap svg{width:100%;display:block}
+.viz-ctrl-group{display:flex;flex-direction:column;gap:3px;align-items:center}
+.viz-ctrl-label{font-size:10px;color:var(--text3);text-align:center}
+.viz-section-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);text-align:center;margin-bottom:1px}
+.viz-ctrl-box{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:12px;font-weight:500;color:var(--text);min-width:100px;justify-content:space-between}
+.viz-ctrl-btn{width:20px;height:20px;border-radius:4px;background:rgba(79,124,255,0.1);border:1px solid rgba(79,124,255,0.2);cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);user-select:none;transition:background .12s}
+.viz-ctrl-btn:hover{background:rgba(79,124,255,0.2)}
+.viz-res-row{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.viz-res-chip{font-size:11px;color:var(--text2);background:var(--surface2);border-radius:4px;padding:2px 8px;border:1px solid var(--border);font-family:'DM Mono',monospace}
+/* Preset Buttons */
+.preset-btn{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .18s;letter-spacing:.03em;border:2px solid transparent}
+.preset-btn-fhd{background:#1a2a4a;border-color:#3a6aff;color:#7aadff}
+.preset-btn-fhd:hover{background:#213060;border-color:#5a8aff;color:#a0c4ff}
+.preset-btn-fhd.active{background:#2a50c0;border-color:#4f7cff;color:#fff;box-shadow:0 0 0 3px rgba(79,124,255,0.35)}
+.preset-btn-4k{background:#1a3a2a;border-color:#00a880;color:#00d4aa}
+.preset-btn-4k:hover{background:#1e4a32;border-color:#00c898;color:#40eec8}
+.preset-btn-4k.active{background:#006845;border-color:#00d4aa;color:#fff;box-shadow:0 0 0 3px rgba(0,212,170,0.35)}
+.price-table{width:100%;border-collapse:collapse}
+.price-table tr{border-bottom:1px solid var(--border)}
+.price-table tr:last-child{border-bottom:none}
+.price-table td{padding:10px 0;font-size:14px}
+.price-table td:first-child{color:var(--text2)}
+.price-table td:last-child{text-align:right;font-weight:500;font-family:'DM Mono',monospace}
+.price-highlight td:first-child{color:var(--accent2);font-weight:500}
+.price-highlight td:last-child{color:var(--accent2);font-size:16px}
+.power-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.power-bar-label{font-size:11px;color:var(--text3);width:65px;flex-shrink:0}
+.power-bar-track{flex:1;height:5px;background:var(--surface2);border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+.power-bar-fill{height:100%;border-radius:999px;transition:width 0.4s ease}
+.power-bar-val{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);width:70px;text-align:right;flex-shrink:0}
+.spec-row{display:flex;flex-wrap:wrap;gap:6px}
+.spec-tag{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text2)}
+.warn-box{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:var(--warn);margin-top:10px}
+.note{font-size:11px;color:var(--text3);margin-top:12px;line-height:1.6;padding-top:12px;border-top:1px solid var(--border)}
+.export-card{background:var(--surface);border:1px solid rgba(0,212,170,0.2);border-radius:var(--radius);padding:22px;margin-bottom:14px}
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.export-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.export-btn{width:100%;padding:12px 16px;background:var(--accent2);color:#0a1a14;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.export-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.export-btn-secondary{width:100%;padding:12px 16px;background:rgba(79,124,255,0.15);color:var(--accent);border:1px solid rgba(79,124,255,0.4);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.export-btn-secondary:hover{background:rgba(79,124,255,0.25);transform:translateY(-1px)}
+.vp-select-wrap{display:flex;align-items:center;gap:8px}
+.vp-tooltip{font-size:11px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace}
+.req-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px}
+.req-row label{font-size:12px;color:var(--text2)}
+.req-ctrl{display:flex;align-items:center;gap:6px}
+.req-ctrl button{width:20px;height:20px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;line-height:1;padding:0}
+.req-ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+.req-ctrl span{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;min-width:16px;text-align:center;color:var(--text)}
+.addon-section{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2);margin-bottom:14px}
+.addon-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.vp-rec-panel{background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
+.vp-rec-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.container{padding:16px}.header{padding:14px 16px}.export-grid{grid-template-columns:1fr}.export-btn-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">MH</div>
+  <div class="header-text"><h1>MAXHUB LED Calculator</h1><p>Kalkulator Videotron &amp; Surat Penawaran</p></div>
+  <span class="header-badge">PT. Raja Pixel Vision · v14</span>
+</div>
+<div class="container">
+<div class="layout">
+<!-- LEFT -->
+<div>
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">⊞</div><span class="card-title">Pilih Produk</span></div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipe Lokasi</label><select id="env" onchange="filterProducts()"><option value="Indoor">Indoor</option><option value="Outdoor">Outdoor</option></select></div>
+      <div class="form-group"><label>Pixel Pitch</label><select id="pitch" onchange="filterByPitch()"></select></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0"><label>Model / Status TKDN</label><select id="modelsel" onchange="updateCalc()"></select></div>
+    <div class="product-info" id="product-info"><div class="product-model">—</div><div class="product-name">Pilih produk di atas</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-icon amber">≡</div><span class="card-title">Spesifikasi Produk</span></div>
+    <div class="spec-row" id="spec-tags"><span class="spec-tag">—</span></div>
+  </div>
+  <div class="export-card">
+    <div class="card-header"><div class="card-icon green">↓</div><span class="card-title" style="color:var(--accent2)">Export Dokumen</span></div>
+    <div class="export-grid">
+      <div class="form-group"><label>No. Quotation</label><input type="text" id="quo-no" value="QUO/RPV/26-04/00001"></div>
+      <div class="form-group"><label>Tanggal</label><input type="text" id="quo-date"></div>
+      <div class="form-group"><label>Kepada (Perusahaan)</label><input type="text" id="quo-company" value="PT. COMPANY"></div>
+      <div class="form-group"><label>Nama PIC</label><input type="text" id="quo-pic" value="Mr. / Mrs."></div>
+      <div class="form-group"><label>Alamat</label><input type="text" id="quo-address" value="Jl. ..."></div>
+      <div class="form-group"><label>No. Telepon</label><input type="text" id="quo-phone" value="08xx-xxxx-xxxx"></div>
+    </div>
+    <div class="export-btn-row">
+      <button class="export-btn" onclick="exportExcel()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Surat Penawaran (.xlsx)
+      </button>
+      <button class="export-btn-secondary" onclick="exportDatasheetPDF()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="3"/></svg>
+        Export Datasheet (.pdf)
+      </button>
+    </div>
+  </div>
+</div>
+<!-- RIGHT -->
+<div>
+  <div class="card">
+    <div class="card-header"><div class="card-icon teal">◈</div><span class="card-title">Visualisasi Layar</span></div>
+    <div class="screen-preview">
+      <div class="viz-svg-wrap"><svg id="viz-stage" viewBox="0 0 580 320" xmlns="http://www.w3.org/2000/svg" style="height:320px"></svg></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="viz-section-label" style="width:100%;text-align:center">Ukuran Bidang Pemasangan</div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="viz-ctrl-group"><div class="viz-ctrl-label">Lebar (cm)</div><div class="viz-ctrl-box" style="min-width:148px"><button class="viz-ctrl-btn" onclick="vizAdjCm('wallW',-50)">−</button><input type="number" id="viz-wallW-cm" value="800" min="50" max="10000" step="1" style="width:52px;text-align:center;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;outline:none;padding:0" oninput="vizSetCm('wallW',this.value)" onblur="vizSetCm('wallW',this.value)"><button class="viz-ctrl-btn" onclick="vizAdjCm('wallW',50)">+</button></div></div>
+            <div class="viz-ctrl-group"><div class="viz-ctrl-label">Tinggi (cm)</div><div class="viz-ctrl-box" style="min-width:148px"><button class="viz-ctrl-btn" onclick="vizAdjCm('wallH',-50)">−</button><input type="number" id="viz-wallH-cm" value="500" min="50" max="10000" step="1" style="width:52px;text-align:center;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;outline:none;padding:0" oninput="vizSetCm('wallH',this.value)" onblur="vizSetCm('wallH',this.value)"><button class="viz-ctrl-btn" onclick="vizAdjCm('wallH',50)">+</button></div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="viz-section-label" style="width:100%;text-align:center">Posisi Layar</div>
+          <div class="viz-ctrl-group"><div class="viz-ctrl-label">Tinggi dari lantai (cm)</div><div class="viz-ctrl-box" style="min-width:148px"><button class="viz-ctrl-btn" onclick="vizAdjCm('offY',-10)">−</button><input type="number" id="viz-scrOffY-cm" value="100" min="0" max="5000" step="1" style="width:52px;text-align:center;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;outline:none;padding:0" oninput="vizSetCm('offY',this.value)" onblur="vizSetCm('offY',this.value)"><button class="viz-ctrl-btn" onclick="vizAdjCm('offY',10)">+</button></div></div>
+        </div>
+      </div>
+      <div id="pole-controls-wrap" style="display:none;margin-top:12px">
+        <div style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.25);border-radius:var(--radius-sm);padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--warn);margin-bottom:10px">Struktur Tiang / Pole Outdoor</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:10px;color:var(--text3)">Tipe Tiang</div>
+              <div style="display:flex;gap:5px">
+                <button id="pole-btn-single" onclick="setPoleType('single')" style="padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);color:var(--warn)">Single Pole</button>
+                <button id="pole-btn-double" onclick="setPoleType('double')" style="padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">Double Pole</button>
+                <button id="pole-btn-triple" onclick="setPoleType('triple')" style="padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">Triple Pole</button>
+                <button id="pole-btn-none" onclick="setPoleType('none')" style="padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">Tanpa Tiang</button>
+              </div>
+            </div>
+            <div id="pole-width-wrap" style="display:flex;flex-direction:column;gap:3px;align-items:center"><div style="font-size:10px;color:var(--text3)">Diameter Tiang (inch)</div><div class="viz-ctrl-box" style="min-width:130px"><button class="viz-ctrl-btn" onclick="vizAdjCm('poleW',-1)">−</button><input type="number" id="viz-poleW-cm" value="12" min="10" max="20" step="1" style="width:42px;text-align:center;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;outline:none;padding:0" oninput="vizSetCm('poleW',this.value)" onblur="vizSetCm('poleW',this.value)"><button class="viz-ctrl-btn" onclick="vizAdjCm('poleW',1)">+</button></div></div>
+          </div>
+          <div id="pole-info-text" style="font-size:11px;color:var(--text3);margin-top:8px;font-family:'DM Mono',monospace"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:12px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="viz-section-label">Jumlah Cabinet</div>
+          <div style="display:flex;gap:8px">
+            <div class="viz-ctrl-group"><div class="viz-ctrl-label">Kolom (horizontal)</div><div class="viz-ctrl-box" style="min-width:148px"><button class="viz-ctrl-btn" onclick="vizAdjCab('qW',-1)">−</button><span id="viz-qW" style="font-size:13px;font-weight:600;min-width:28px;text-align:center;font-family:'DM Mono',monospace">1</span><button class="viz-ctrl-btn" onclick="vizAdjCab('qW',1)">+</button></div></div>
+            <div class="viz-ctrl-group"><div class="viz-ctrl-label">Baris (vertikal)</div><div class="viz-ctrl-box" style="min-width:148px"><button class="viz-ctrl-btn" onclick="vizAdjCab('qH',-1)">−</button><span id="viz-qH" style="font-size:13px;font-weight:600;min-width:28px;text-align:center;font-family:'DM Mono',monospace">1</span><button class="viz-ctrl-btn" onclick="vizAdjCab('qH',1)">+</button></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <span style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Preset:</span>
+            <button onclick="applyResPreset('FHD')" id="preset-btn-fhd" class="preset-btn preset-btn-fhd">Full HD <span style="font-size:9px;font-weight:400;opacity:.8">1920x1080</span></button>
+            <button onclick="applyResPreset('4K')" id="preset-btn-4k" class="preset-btn preset-btn-4k">4K <span style="font-size:9px;font-weight:400;opacity:.8">3840x2160</span></button>
+            <span id="preset-result-info" style="font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace"></span>
+          </div>
+        </div>
+      </div>
+      <div class="viz-res-row" id="viz-res-info"></div>
+      <div id="viz-overflow-warn" style="display:none;margin-top:10px;background:rgba(255,50,40,0.10);border:1px solid rgba(255,94,87,0.45);border-radius:var(--radius-sm);padding:10px 14px;color:#ff8a87;line-height:1.6"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">⊞</div><span class="card-title">Hasil Perhitungan</span></div>
+    <div class="metrics-grid" id="metrics"></div>
+    <div id="power-bars"></div>
+    <div id="warn-box"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-icon amber">Rp</div><span class="card-title">Estimasi Harga</span></div>
+    <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2)">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Kebutuhan Signal & Output</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Isi kebutuhan input/output — VP kompatibel ditampilkan otomatis</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Input Signal</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+        <div class="req-row" style="flex-direction:column;align-items:flex-start;gap:3px;padding:7px 10px"><label style="display:flex;flex-direction:column;gap:1px;width:100%"><span style="font-size:12px;font-weight:600;color:var(--text)">HDMI 1080p</span><span style="font-size:10px;color:var(--text3);font-weight:400">HDMI 1.3 · max 1920x1080</span></label><div class="req-ctrl" style="margin-top:4px"><button onclick="adjReq('HDMI',-1)">−</button><span id="req-HDMI">0</span><button onclick="adjReq('HDMI',1)">+</button></div></div>
+        <div class="req-row" style="flex-direction:column;align-items:flex-start;gap:3px;padding:7px 10px"><label style="display:flex;flex-direction:column;gap:1px;width:100%"><span style="font-size:12px;font-weight:600;color:var(--text)">HDMI 4K</span><span style="font-size:10px;color:var(--text3);font-weight:400">HDMI 2.0 · max 3840x2160</span></label><div class="req-ctrl" style="margin-top:4px"><button onclick="adjReq('HDMI20',-1)">−</button><span id="req-HDMI20">0</span><button onclick="adjReq('HDMI20',1)">+</button></div></div>
+        <div class="req-row"><label>DisplayPort</label><div class="req-ctrl"><button onclick="adjReq('DP',-1)">−</button><span id="req-DP">0</span><button onclick="adjReq('DP',1)">+</button></div></div>
+        <div class="req-row"><label>DVI</label><div class="req-ctrl"><button onclick="adjReq('DVI',-1)">−</button><span id="req-DVI">0</span><button onclick="adjReq('DVI',1)">+</button></div></div>
+        <div class="req-row"><label>SDI</label><div class="req-ctrl"><button onclick="adjReq('SDI',-1)">−</button><span id="req-SDI">0</span><button onclick="adjReq('SDI',1)">+</button></div></div>
+        <div class="req-row"><label>VGA</label><div class="req-ctrl"><button onclick="adjReq('VGA',-1)">−</button><span id="req-VGA">0</span><button onclick="adjReq('VGA',1)">+</button></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Output / Lainnya</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="req-preview" onchange="autoSelectHSeries();filterVPByReq()" style="width:14px;height:14px;margin-top:1px"><span>Preview Card <span style="font-size:10px;color:var(--text3)">(H Series, Rp 44.995.860)</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="req-redundant-psu" onchange="autoSelectHSeries();filterVPByReq()" style="width:14px;height:14px;margin-top:1px"><span>Redundant Power 800W <span style="font-size:10px;color:var(--text3)">(H5+, Rp 8.839.000)</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="pref-20rj45" onchange="autoSelectHSeries()" style="width:14px;height:14px;margin-top:1px"><span>Upgrade ke 20x RJ45 Sending Card</span></label>
+      </div>
+    </div>
+    <div class="vp-rec-panel" id="vp-auto-rec-panel">
+      <div class="vp-rec-title">Rekomendasi Video Processor</div>
+      <div id="vp-auto-rec-list"><div style="font-size:12px;color:var(--text3)">Hitung ukuran layar terlebih dahulu...</div></div>
+    </div>
+    <div class="form-group" style="margin-bottom:4px">
+      <label>Video Processor <span id="vp-match-count" style="font-size:11px;color:var(--text3);font-weight:400"></span></label>
+      <div class="vp-select-wrap"><select id="vp-select" onchange="updateVPUI();updateCalc()" style="flex:1"><option value="none">— Tanpa Video Processor —</option></select></div>
+      <div class="vp-tooltip" id="vp-tooltip"></div>
+    </div>
+    <div id="vp-req-hint" style="font-size:11px;color:var(--text3);margin-bottom:8px;min-height:14px"></div>
+    <div id="h-cards-wrap" style="display:none;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2)">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">H Series — Konfigurasi Otomatis</div>
+      <div id="h-auto-rec" style="padding:10px;border-radius:6px;background:rgba(79,138,255,0.08);border:1px solid rgba(79,138,255,0.2);margin-bottom:12px;font-size:12px">
+        <div style="font-weight:600;color:var(--accent);margin-bottom:6px">Rekomendasi Konfigurasi</div>
+        <div id="h-rec-chassis" style="color:var(--text2);margin-bottom:4px"></div>
+        <div id="h-rec-output" style="color:var(--text2);margin-bottom:4px;line-height:1.6"></div>
+        <div id="h-rec-slots" style="color:var(--text3);font-size:11px;margin-top:4px"></div>
+        <button id="h-rec-btn" onclick="useRecommendedH()" style="display:none;margin-top:8px;font-size:11px;padding:4px 10px;background:rgba(79,138,255,0.15);border:1px solid rgba(79,138,255,0.4);border-radius:4px;color:var(--accent);cursor:pointer">Pakai Rekomendasi</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Extra (Opsional)</div>
+      <div id="h-extra-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <div style="padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);display:flex;justify-content:space-between"><span>Total Accessories</span><span id="h-cards-subtotal" style="font-weight:600;color:var(--text)">Rp 0</span></div>
+    </div>
+    <div id="maint-tool-wrap" style="display:none;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Maintenance Tool</div>
+      <div id="maint-tool-info" style="font-size:12px;color:var(--text2)"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer"><input type="checkbox" id="maint-tool-check" onchange="updateCalc()" style="width:14px;height:14px"><span id="maint-tool-label" style="font-size:13px"></span></label>
+    </div>
+    <div class="addon-section">
+      <div class="addon-title">Layanan Tambahan</div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="addon-items-wrap"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Total Layanan: <span id="addon-total-display" style="color:var(--accent2);font-weight:600">Rp 0</span></div>
+    </div>
+    <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2)">
+      <div style="font-size:11px;color:#a78bfa;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Accessories MAXHUB</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="acc-sl22mc" onchange="updateCalc()" style="width:14px;height:14px;flex-shrink:0;margin-top:2px"><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px">MAXHUB SL22MC Smart Podium</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:4px">Smart Lectern 21.5" Capacitive Touch, Electrically adjustable height</div><div style="font-size:12px;color:var(--accent2);font-weight:600">Rp 199.990.000</div></div></label></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="acc-ucp30" onchange="updateCalc()" style="width:14px;height:14px;flex-shrink:0;margin-top:2px"><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px">MAXHUB UC-P30 PTZ Camera</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:4px">4K dual-eye camera, 12x Optical Zoom, AI Autoframing</div><div style="font-size:12px;color:var(--accent2);font-weight:600">Rp 28.200.000</div></div></label></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Total Accessories: <span id="acc-total-display" style="color:var(--accent2);font-weight:600">Rp 0</span></div>
+    </div>
+    <table class="price-table" id="pricing"></table>
+    <div id="discount-note"></div>
+    <div class="note" id="price-note"></div>
+  </div>
+</div>
+</div>
+</div>
+<script>
+var products=[
+  {tkdn:"TKDN",env:"Indoor",pitch:"P1.2",model:"VT-808-12PX",name:"Indoor Videotron P1.2 Fix Cabinet",cW:600,cH:337.5,pxW:480,pxH:270,price:42500000,maxW:75,avgW:23,brightness:600,contrast:"6500:1",refresh:3840,weight:4.5,ledLife:100000,ledType:"SMD1010"},
+  {tkdn:"TKDN",env:"Indoor",pitch:"P1.2",model:"VT-808-COB-12PX",name:"Indoor Videotron P1.2 COB Cabinet",cW:600,cH:337.5,pxW:480,pxH:270,price:57900000,maxW:69,avgW:21,brightness:800,contrast:"15000:1",refresh:3840,weight:3.8,ledLife:100000,ledType:"COB Flip Chip"},
+  {tkdn:"TKDN",env:"Indoor",pitch:"P1.8",model:"VT-808-18PX",name:"Indoor Videotron P1.8 Fix Cabinet",cW:600,cH:337.5,pxW:320,pxH:180,price:29900000,maxW:77,avgW:23,brightness:600,contrast:"6500:1",refresh:3840,weight:4.5,ledLife:100000,ledType:"SMD1515"},
+  {tkdn:"TKDN",env:"Indoor",pitch:"P2.5",model:"VT-808-25PX",name:"Indoor Videotron P2.5 Fix Cabinet",cW:640,cH:480,pxW:256,pxH:192,price:29800000,maxW:99,avgW:33,brightness:550,contrast:"6500:1",refresh:3840,weight:6.2,ledLife:100000,ledType:"SMD"},
+  {tkdn:"TKDN",env:"Outdoor",pitch:"P4",model:"VT-908-40P",name:"Outdoor Videotron P4.0",cW:960,cH:960,pxW:240,pxH:240,price:78800000,maxW:520,avgW:173,brightness:6500,contrast:"10000:1",refresh:3840,weight:20.5,ledLife:70000,ledType:"SMD1921"},
+  {tkdn:"TKDN",env:"Outdoor",pitch:"P6",model:"VT-908-66P",name:"Outdoor Videotron P6.67",cW:960,cH:960,pxW:144,pxH:144,price:72000000,maxW:630,avgW:210,brightness:8000,contrast:"13000:1",refresh:3840,weight:20.5,ledLife:70000,ledType:"SMD2727"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.2",model:"EF2712",name:"Indoor Videotron P1.2 Fix Cabinet",cW:600,cH:337.5,pxW:480,pxH:270,price:21500000,maxW:75,avgW:23,brightness:600,contrast:"6500:1",refresh:3840,weight:4.5,ledLife:100000,ledType:"SMD1010"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.5",model:"EF2715",name:"Indoor Videotron P1.58 Fix Cabinet",cW:600,cH:337.5,pxW:384,pxH:216,price:12700000,maxW:63,avgW:20,brightness:600,contrast:"6500:1",refresh:3840,weight:4.5,ledLife:100000,ledType:"SMD1212"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.8",model:"EF2718",name:"Indoor Videotron P1.8 Fix Cabinet",cW:600,cH:337.5,pxW:320,pxH:180,price:9900000,maxW:77,avgW:23,brightness:600,contrast:"6500:1",refresh:3840,weight:4.5,ledLife:100000,ledType:"SMD1515"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P2.5",model:"GH3125",name:"Indoor Videotron P2.5 Fix Cabinet",cW:640,cH:480,pxW:256,pxH:192,price:9400000,maxW:99,avgW:33,brightness:550,contrast:"6500:1",refresh:3840,weight:6.2,ledLife:100000,ledType:"SMD"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.5",model:"GV2715",name:"Indoor Videotron P1.58 Fix Cabinet",cW:610,cH:343,pxW:480,pxH:270,price:14800000,maxW:68,avgW:23,brightness:800,contrast:"6500:1",refresh:3840,weight:4.8,ledLife:100000,ledType:"SMD1212"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.9",model:"GV2719",name:"Indoor Videotron P1.9 Fix Cabinet",cW:610,cH:343,pxW:320,pxH:180,price:12700000,maxW:62,avgW:23,brightness:800,contrast:"6500:1",refresh:3840,weight:4.8,ledLife:100000,ledType:"SMD1515"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P2.5",model:"GV2725",name:"Indoor Videotron P2.5 Fix Cabinet",cW:610,cH:343,pxW:240,pxH:135,price:11200000,maxW:63,avgW:21,brightness:800,contrast:"6500:1",refresh:3840,weight:4.8,ledLife:100000,ledType:"SMD2020"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P0.9",model:"CN2709",name:"Indoor Videotron P0.9 Fix Cabinet",cW:600,cH:337.5,pxW:640,pxH:360,price:50400000,maxW:58,avgW:17.4,brightness:800,contrast:"15000:1",refresh:3840,weight:3.8,ledLife:100000,ledType:"COB Flip Chip"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.2",model:"CN2712",name:"Indoor Videotron P1.25 Fix Cabinet",cW:600,cH:337.5,pxW:480,pxH:270,price:22900000,maxW:69,avgW:21,brightness:800,contrast:"15000:1",refresh:3840,weight:3.8,ledLife:100000,ledType:"COB Flip Chip"},
+  {tkdn:"Non TKDN",env:"Indoor",pitch:"P1.5",model:"CN2715",name:"Indoor Videotron P1.5 Fix Cabinet",cW:600,cH:337.5,pxW:384,pxH:216,price:21400000,maxW:58,avgW:17.4,brightness:800,contrast:"15000:1",refresh:3840,weight:3.8,ledLife:100000,ledType:"COB Flip Chip"},
+  {tkdn:"Non TKDN",env:"Outdoor",pitch:"P4",model:"YM5340",name:"Outdoor Videotron P4.0",cW:960,cH:960,pxW:240,pxH:240,price:78800000,maxW:520,avgW:173,brightness:6500,contrast:"10000:1",refresh:3840,weight:20.5,ledLife:70000,ledType:"SMD1921"},
+  {tkdn:"Non TKDN",env:"Outdoor",pitch:"P6",model:"YM5360",name:"Outdoor Videotron P6.67",cW:960,cH:960,pxW:144,pxH:144,price:72000000,maxW:630,avgW:210,brightness:8000,contrast:"13000:1",refresh:3840,weight:20.5,ledLife:70000,ledType:"SMD2727"},
+  {tkdn:"Non TKDN",env:"Outdoor",pitch:"P10",model:"YM53A0",name:"Outdoor Videotron P10",cW:960,cH:960,pxW:96,pxH:96,price:70300000,maxW:630,avgW:210,brightness:8000,contrast:"13000:1",refresh:3840,weight:20.5,ledLife:70000,ledType:"SMD2727"}
+];
+
+var vpList=[
+  {key:"TU15Pro",group:"TU Series",label:"NovaStar TU15 Pro",price:15000000,ports:4,maxPx:2600000,desc:"4 port RJ45 · 2.6M px · All-in-One",inputs:{HDMI:1,DP:0,DVI:0,SDI:0,VGA:0,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI 1.3",outputSpec:"4x RJ45",maxInputRes:"1920x1080@60Hz",layers:0,mode:"Async/Sync",control:"Ethernet/USB"},
+  {key:"TU20Pro",group:"TU Series",label:"NovaStar TU20 Pro",price:22000000,ports:6,maxPx:3900000,desc:"6 port RJ45 · 3.9M px",inputs:{HDMI:1,DP:0,DVI:0,SDI:0,VGA:0,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI 1.3",outputSpec:"6x RJ45",maxInputRes:"1920x1080@60Hz",layers:0,mode:"Async/Sync",control:"Ethernet/USB"},
+  {key:"TU4K",group:"TU Series",label:"NovaStar TU4K",price:70000000,ports:10,maxPx:6500000,desc:"10 port RJ45 · 6.5M px · 4K",inputs:{HDMI:1,DP:1,DVI:0,SDI:0,VGA:0,HDMI20:1},hasBackup:false,inputSpec:"1x HDMI 2.0 · 1x DP 1.2",outputSpec:"10x RJ45",maxInputRes:"3840x2160@60Hz",layers:0,mode:"Sync",control:"Ethernet/USB"},
+  {key:"TB50",group:"Taurus Series",label:"NovaStar TB50",price:13928000,ports:2,maxPx:1300000,isAsync:true,desc:"2 port RJ45 · 1.3M px · Async",inputs:{HDMI:0,DP:0,DVI:0,SDI:0,VGA:0,HDMI20:0},hasBackup:true,inputSpec:"Tidak ada (via Vnnox Cloud/USB)",outputSpec:"2x RJ45 + Backup",maxInputRes:"—",layers:0,mode:"Async",control:"Ethernet/WiFi"},
+  {key:"TB60",group:"Taurus Series",label:"NovaStar TB60",price:17576000,ports:4,maxPx:2300000,isAsync:true,desc:"4 port RJ45 · 2.3M px · Async + HDMI",inputs:{HDMI:1,DP:0,DVI:0,SDI:0,VGA:0,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI 1.3",outputSpec:"4x RJ45",maxInputRes:"1920x1080@60Hz",layers:0,mode:"Async+Live",control:"Ethernet/WiFi"},
+  {key:"VX400",group:"NovaStar VX Series",label:"NovaStar VX400",price:40264000,ports:4,maxPx:2600000,desc:"4 port · 2.6M px · HDMI+DVI+VGA",inputs:{HDMI:1,DP:0,DVI:1,SDI:0,VGA:1,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI · 1x DVI · 1x VGA",outputSpec:"4x RJ45",maxInputRes:"1920x1200@60Hz",layers:4,mode:"Sync",control:"Ethernet/USB"},
+  {key:"VX600",group:"NovaStar VX Series",label:"NovaStar VX600",price:43154000,ports:6,maxPx:3900000,desc:"6 port · 3.9M px",inputs:{HDMI:1,DP:0,DVI:1,SDI:0,VGA:1,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI · 1x DVI · 1x VGA",outputSpec:"6x RJ45",maxInputRes:"1920x1200@60Hz",layers:4,mode:"Sync",control:"Ethernet/USB"},
+  {key:"VX1000",group:"NovaStar VX Series",label:"NovaStar VX1000",price:62196000,ports:10,maxPx:6500000,desc:"10 port · 6.5M px",inputs:{HDMI:1,DP:1,DVI:1,SDI:0,VGA:1,HDMI20:0},hasBackup:false,inputSpec:"1x HDMI · 1x DVI · 1x DP · 1x VGA",outputSpec:"10x RJ45",maxInputRes:"2560x1600@60Hz",layers:4,mode:"Sync",control:"Ethernet/USB"},
+  {key:"VX400Pro",group:"NovaStar VX Pro Series",label:"NovaStar VX400 Pro",price:49500000,ports:4,maxPx:2600000,desc:"4 port · 2.6M px · 4K · 6 layer",inputs:{HDMI:2,DP:0,DVI:0,SDI:1,VGA:0,HDMI20:1},hasBackup:false,inputSpec:"1x HDMI 2.0 · 2x HDMI 1.3 · 1x SDI",outputSpec:"4x RJ45 · 2x OPT",maxInputRes:"4096x2160@60Hz",layers:6,mode:"Sync",control:"Ethernet/USB/Web"},
+  {key:"VX600Pro",group:"NovaStar VX Pro Series",label:"NovaStar VX600 Pro",price:54500000,ports:6,maxPx:3900000,desc:"6 port · 3.9M px · 4K · 6 layer",inputs:{HDMI:2,DP:0,DVI:0,SDI:1,VGA:0,HDMI20:1},hasBackup:false,inputSpec:"1x HDMI 2.0 · 2x HDMI 1.3 · 1x SDI",outputSpec:"6x RJ45 · 2x OPT",maxInputRes:"4096x2160@60Hz",layers:6,mode:"Sync",control:"Ethernet/USB/Web"},
+  {key:"VX1000Pro",group:"NovaStar VX Pro Series",label:"NovaStar VX1000 Pro",price:75000000,ports:10,maxPx:6500000,desc:"10 port · 6.5M px · 4K · SDI",inputs:{HDMI:2,DP:0,DVI:0,SDI:1,VGA:0,HDMI20:1},hasBackup:false,inputSpec:"1x HDMI 2.0 · 2x HDMI 1.3 · 1x SDI",outputSpec:"10x RJ45 · 2x OPT",maxInputRes:"4096x2160@60Hz",layers:6,mode:"Sync",control:"Ethernet/USB/Web"},
+  {key:"VX2000Pro",group:"NovaStar VX Pro Series",label:"NovaStar VX2000 Pro",price:280000000,ports:20,maxPx:13000000,desc:"20 port · 13M px · 4K · 12G-SDI",inputs:{HDMI:4,DP:1,DVI:0,SDI:1,VGA:0,HDMI20:2},hasBackup:false,inputSpec:"2x HDMI 2.0 · 4x HDMI 1.3 · 1x 12G-SDI · 1x DP",outputSpec:"20x RJ45 · 4x OPT",maxInputRes:"4096x2160@60Hz",layers:12,mode:"Sync",control:"Ethernet/USB/Web"},
+  {key:"H2",group:"NovaStar H Series",hSeries:true,label:"NovaStar H2",price:27529000,ports:0,maxPx:41600000,inputSlots:4,outputSlots:2,desc:"4 input + 2 output slot, 41.6M px, 32 Layer",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:32,mode:"Sync FPGA",control:"Ethernet/Web"},
+  {key:"H5",group:"NovaStar H Series",hSeries:true,label:"NovaStar H5",price:60009000,ports:0,maxPx:31200000,inputSlots:10,outputSlots:5,desc:"10 input + 5 output slot, 31.2M px",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:160,mode:"Sync FPGA",control:"Ethernet/Web"},
+  {key:"H9",group:"NovaStar H Series",hSeries:true,label:"NovaStar H9",price:90306000,ports:0,maxPx:52000000,inputSlots:16,outputSlots:10,desc:"16 input + 10 output slot, 52M px",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:320,mode:"Sync FPGA",control:"Ethernet/Web"},
+  {key:"H9E",group:"NovaStar H Series",hSeries:true,label:"NovaStar H9 Enhanced",price:130667000,ports:0,maxPx:52000000,inputSlots:18,outputSlots:10,desc:"18 input + 10 output slot, 52M px",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:360,mode:"Sync FPGA",control:"Ethernet/Web"},
+  {key:"H15",group:"NovaStar H Series",hSeries:true,label:"NovaStar H15",price:253241000,ports:0,maxPx:99999999,inputSlots:32,outputSlots:15,desc:"32 input + 15 output slot, ultra-high res",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:640,mode:"Sync FPGA",control:"Ethernet/Web"},
+  {key:"H15E",group:"NovaStar H Series",hSeries:true,label:"NovaStar H15 Enhanced",price:315806000,ports:0,maxPx:99999999,inputSlots:40,outputSlots:20,desc:"40 input + 20 output slot, ultra-high res",inputs:{HDMI:99,DP:99,DVI:99,SDI:99,VGA:99,HDMI20:99},hasBackup:true,inputSpec:"Modular Input Card",outputSpec:"Modular Output Card",maxInputRes:"4096x2160@60Hz",layers:800,mode:"Sync FPGA",control:"Ethernet/Web"}
+];
+
+var vpMap={};
+vpList.forEach(function(v){vpMap[v.key]=v;});
+
+var hCards={
+  input:[
+    {key:"in_4xHDMI",label:"H_4x HDMI Input Card",price:33279000,desc:"4x HDMI 1.3 input"},
+    {key:"in_1xHDMI20",label:"H_1x HDMI 2.0 Input Card",price:47443000,desc:"1x HDMI 2.0"},
+    {key:"in_4xDVI",label:"H_4x DVI Input Card",price:33279000,desc:"4x DVI-D input"},
+    {key:"in_4x3GSDI",label:"H_4x 3G-SDI Input Card",price:67091000,desc:"4x 3G-SDI"},
+    {key:"in_2xDP",label:"H_2x DP 1.1 Input Card",price:33279000,desc:"2x DisplayPort 1.1"},
+    {key:"in_4xVGA",label:"H_4x VGA Input Card",price:33279000,desc:"4x VGA input"}
+  ],
+  output:[
+    {key:"out_16xRJ45_2xF",label:"H_16x RJ45 + 2x Fiber Sending Card",price:67091000,desc:"16x RJ45 + 2x Fiber",portsOut:16},
+    {key:"out_20xRJ45",label:"H_20x RJ45 Sending Card",price:74652000,desc:"20x RJ45",portsOut:20},
+    {key:"out_2xRJ45_preview",label:"H_2x RJ45 + 1x HDMI MVR Card",price:49945000,desc:"MultiViewer Card",portsOut:2}
+  ],
+  extra:[
+    {key:"redundant_psu",label:"Redundant Power 800W",price:8839000,desc:"Hot-swap redundant PSU"}
+  ]
+};
+
+var accessoriesList=[
+  {key:'sl22mc',id:'acc-sl22mc',label:'MAXHUB SL22MC Smart Podium',brand:'MAXHUB',price:119990000,desc:'Smart Lectern 21.5" Capacitive Touch, Electrically adjustable height'},
+  {key:'ucp30',id:'acc-ucp30',label:'MAXHUB UC-P30 PTZ Camera',brand:'MAXHUB',price:28200000,desc:'4K dual-eye camera, 12x Optical Zoom, AI Autoframing'}
+];
+
+var maintTools={
+  SMD:{key:"LT01",label:"NovaStar LT01 Magnetic Tool",price:1970000,desc:"Maintenance tool untuk SMD Series"},
+  COB:{key:"LT05",label:"NovaStar LT05 Suction Tool",price:11235000,desc:"Maintenance tool untuk COB Series"}
+};
+
+var addonConfig={
+  Outdoor:[
+    {key:"inst_outdoor",label:"Instalasi Videotron Outdoor",desc:"Instalasi Outdoor Jabodetabek (Transportation, Setup, Calibration, Training)",pricePerSqm:2000000},
+    {key:"struktur_outdoor",label:"Struktur / Bracket LED Outdoor",desc:"Rangka & Struktur Videotron Outdoor, fabrikasi baja, subframe mounting, pengelasan, anti karat",pricePerSqm:10000000},
+    {key:"material_outdoor",label:"Standar Material Outdoor",desc:"Box Panel MCB, UTP Cat6, Kabel Power LED ke BOX Panel",pricePerSqm:2000000}
+  ],
+  Indoor:[
+    {key:"inst_indoor",label:"Instalasi Videotron Indoor",desc:"Instalasi Indoor Jabodetabek (Transportation, Setup, Calibration, Training)",pricePerSqm:3000000},
+    {key:"struktur_indoor",label:"Struktur / Bracket LED Indoor",desc:"LED Construction Bracket (Tidak termasuk Frame)",pricePerSqm:2000000},
+    {key:"material_indoor",label:"Standar Material Indoor",desc:"Box Panel MCB, UTP Cat6, Kabel Power LED ke BOX Panel",pricePerSqm:2000000}
+  ]
+};
+
+var _lastAddonEnv=null,_lastAddonArea=null;
+var vpReq={HDMI:0,HDMI20:0,DP:0,DVI:0,SDI:0,VGA:0};
+var H_SERIES_ORDER=['H2','H5','H9','H9E','H15','H15E'];
+var PX_PER_PORT=650000;
+var lastCalc={};
+
+function fmt(n){return new Intl.NumberFormat('id-ID').format(Math.round(n));}
+function fmtRp(n){return 'Rp '+fmt(n);}
+function gcd(a,b){return b===0?a:gcd(b,a%b);}
+function getDiscountRate(p){return p.tkdn==="TKDN"?(p.env==="Indoor"?0.50:0.45):0.30;}
+
+function getAccessoriesTotals(){
+  var total=0,selected=[];
+  accessoriesList.forEach(function(item){
+    var cb=document.getElementById(item.id);
+    if(cb&&cb.checked){total+=item.price;selected.push(Object.assign({},item));}
+  });
+  var el=document.getElementById('acc-total-display');
+  if(el) el.textContent=total>0?fmtRp(total):'Rp 0';
+  return {total:total,selected:selected};
+}
+
+function buildAddonItems(env,areaSqm){
+  var wrap=document.getElementById('addon-items-wrap');
+  if(!wrap) return;
+  if(env===_lastAddonEnv&&areaSqm===_lastAddonArea) return;
+  _lastAddonEnv=env; _lastAddonArea=areaSqm;
+  var items=addonConfig[env]||addonConfig['Indoor'];
+  wrap.innerHTML=items.map(function(item){
+    var t=item.pricePerSqm*areaSqm;
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="addon_'+item.key+'" style="width:14px;height:14px;flex-shrink:0;margin-top:2px" onchange="updateCalc()"><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">'+item.label+'</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:5px">'+item.desc+'</div><div style="font-size:12px;color:var(--text2)">Total: <span style="color:var(--accent2);font-weight:600">'+fmtRp(t)+'</span></div></div></label></div>';
+  }).join('');
+}
+
+function getAddonTotals(areaSqm,env){
+  var items=addonConfig[env]||addonConfig['Indoor'],total=0,selected=[];
+  items.forEach(function(item){
+    var cb=document.getElementById('addon_'+item.key);
+    if(cb&&cb.checked){var s=item.pricePerSqm*areaSqm;total+=s;selected.push(Object.assign({},item,{areaSqm:areaSqm,subtotal:s}));}
+  });
+  var el=document.getElementById('addon-total-display');
+  if(el) el.textContent=fmtRp(total);
+  return {total:total,selected:selected};
+}
+
+function updateVPAutoRec(totalPx){
+  var panel=document.getElementById('vp-auto-rec-list');
+  if(!panel) return;
+  var hasAnyReq=Object.values(vpReq).some(function(v){return v>0;})||document.getElementById('req-preview').checked||document.getElementById('req-redundant-psu').checked;
+  var compatible=vpList.filter(function(v){
+    if(v.maxPx<totalPx) return false;
+    if(hasAnyReq&&!vpMatchesReq(v)) return false;
+    return true;
+  });
+  if(compatible.length===0){panel.innerHTML='<div style="font-size:12px;color:var(--warn)">Tidak ada VP kompatibel.</div>';return;}
+  var rec=compatible[0];
+  var portsNeeded=totalPx>0?Math.ceil(totalPx/PX_PER_PORT):0;
+  var isActive=(document.getElementById('vp-select').value===rec.key);
+  panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">'+rec.label+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+rec.desc+'</div><div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:5px">'+fmtRp(rec.price)+'</div></div><button onclick="selectVPFromRec(\''+rec.key+'\')" style="padding:8px 16px;background:'+(isActive?'var(--accent)':'rgba(79,124,255,0.15)')+';border:1px solid '+(isActive?'var(--accent)':'rgba(79,124,255,0.4)')+';border-radius:var(--radius-sm);color:'+(isActive?'#fff':'var(--accent)')+';font-size:12px;font-weight:600;cursor:pointer">'+(isActive?'Digunakan':'Pakai Rekomendasi')+'</button></div>';
+}
+
+function selectVPFromRec(key){
+  var sel=document.getElementById('vp-select');
+  if(sel){sel.value=key;updateVPUI();updateCalc();}
+}
+
+function buildExtraCardList(){
+  var container=document.getElementById('h-extra-list');
+  if(!container) return;
+  container.innerHTML='';
+  hCards.extra.forEach(function(c){
+    var row=document.createElement('div');
+    row.innerHTML='<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="hc_'+c.key+'" style="width:14px;height:14px;cursor:pointer" onchange="autoSelectHSeries()"><label for="hc_'+c.key+'" style="flex:1;font-size:12px;color:var(--text2);cursor:pointer">'+c.label+'<br><span style="font-size:11px;color:var(--text3)">'+fmtRp(c.price)+'</span></label></div>';
+    container.appendChild(row);
+  });
+}
+
+function autoSelectHSeries(){
+  var totalPx=lastCalc&&lastCalc.totalPx?lastCalc.totalPx:0;
+  var reqToCards={HDMI:{key:'in_4xHDMI',ppc:4},HDMI20:{key:'in_1xHDMI20',ppc:1},DP:{key:'in_2xDP',ppc:2},DVI:{key:'in_4xDVI',ppc:4},SDI:{key:'in_4x3GSDI',ppc:4},VGA:{key:'in_4xVGA',ppc:4}};
+  var inputSlots=0,inputItems=[];
+  Object.keys(vpReq).forEach(function(type){
+    var needed=vpReq[type];
+    if(needed===0) return;
+    var mapping=reqToCards[type];
+    if(!mapping) return;
+    var card=hCards.input.filter(function(c){return c.key===mapping.key;})[0];
+    if(!card) return;
+    var qty=Math.ceil(needed/mapping.ppc);
+    inputSlots+=qty;
+    inputItems.push(Object.assign({},card,{qty:qty,subtotal:card.price*qty}));
+  });
+  var portsNeeded=totalPx>0?Math.ceil(totalPx/PX_PER_PORT):1;
+  var prefer20=document.getElementById('pref-20rj45').checked;
+  var sc20=hCards.output.filter(function(c){return c.key==='out_20xRJ45';})[0];
+  var sc16=hCards.output.filter(function(c){return c.key==='out_16xRJ45_2xF';})[0];
+  var activeSC=prefer20&&sc20?sc20:(sc16||sc20);
+  var ppc=prefer20&&sc20?20:16;
+  var outputSlotsNeeded=Math.max(1,Math.ceil(portsNeeded/ppc));
+  var reqRedundantPsu=document.getElementById('req-redundant-psu').checked;
+  var redundantCard=hCards.extra.filter(function(c){return c.key==='redundant_psu';})[0];
+  var extraItems=[];
+  hCards.extra.forEach(function(c){var cb=document.getElementById('hc_'+c.key);if(cb&&cb.checked) extraItems.push(Object.assign({},c,{qty:1,subtotal:c.price}));});
+  if(reqRedundantPsu&&redundantCard&&!extraItems.filter(function(i){return i.key==='redundant_psu';})[0]) extraItems.push(Object.assign({},redundantCard,{qty:1,subtotal:redundantCard.price}));
+  var previewSlot=document.getElementById('req-preview').checked?1:0;
+  var totalInputNeeded=inputSlots+extraItems.length;
+  var totalOutputNeeded=outputSlotsNeeded+previewSlot;
+  var minHKey=reqRedundantPsu?'H5':null;
+  var hList=vpList.filter(function(v){return v.hSeries;});
+  var recommended=null;
+  for(var i=0;i<H_SERIES_ORDER.length;i++){
+    var h=H_SERIES_ORDER[i];
+    if(minHKey&&H_SERIES_ORDER.indexOf(h)<H_SERIES_ORDER.indexOf(minHKey)) continue;
+    var hvp=hList.filter(function(v){return v.key===h;})[0];
+    if(!hvp) continue;
+    if(hvp.maxPx>=Math.max(totalPx,1)&&(hvp.inputSlots||0)>=totalInputNeeded&&(hvp.outputSlots||0)>=totalOutputNeeded){recommended=hvp;break;}
+  }
+  if(!recommended) recommended=hList.filter(function(v){return v.key==='H15E';})[0];
+  var sel=document.getElementById('vp-select');
+  var currentVP=vpMap[sel?sel.value:''];
+  if(!currentVP||!currentVP.hSeries){if(sel&&recommended) sel.value=recommended.key;}
+  var activeVP=vpMap[sel?sel.value:'']||recommended;
+  var outputItems=[];
+  if(activeSC&&outputSlotsNeeded>0) outputItems.push(Object.assign({},activeSC,{qty:outputSlotsNeeded,subtotal:activeSC.price*outputSlotsNeeded}));
+  if(document.getElementById('req-preview').checked){var pc=hCards.output.filter(function(c){return c.key==='out_2xRJ45_preview';})[0];if(pc) outputItems.push(Object.assign({},pc,{qty:1,subtotal:pc.price}));}
+  var recChassis=document.getElementById('h-rec-chassis');
+  var recOutput=document.getElementById('h-rec-output');
+  var recSlots=document.getElementById('h-rec-slots');
+  if(recChassis&&activeVP) recChassis.innerHTML='<b>'+activeVP.label+'</b> — '+fmtRp(activeVP.price);
+  if(recOutput&&activeSC) recOutput.innerHTML='Output: <b>'+outputSlotsNeeded+'x '+activeSC.label+'</b> ('+portsNeeded+' port) — '+fmtRp(activeSC.price*outputSlotsNeeded);
+  if(recSlots) recSlots.textContent='Slot: '+totalInputNeeded+'/'+(activeVP?activeVP.inputSlots:0)+' input | '+totalOutputNeeded+'/'+(activeVP?activeVP.outputSlots:0)+' output';
+  window._hAutoConfig={inputItems:inputItems,outputItems:outputItems,extraItems:extraItems,total:[].concat(inputItems,outputItems,extraItems).reduce(function(s,c){return s+c.subtotal;},0)};
+  var stEl=document.getElementById('h-cards-subtotal');
+  if(stEl) stEl.textContent=fmtRp(window._hAutoConfig.total);
+  updateCalc();
+}
+
+function updateVPUI(){
+  var val=document.getElementById('vp-select').value;
+  var vp=vpMap[val];
+  var isH=vp&&vp.hSeries;
+  var hWrap=document.getElementById('h-cards-wrap');
+  if(hWrap) hWrap.style.display=isH?'':'none';
+  if(isH){if(!document.getElementById('hc_redundant_psu')) buildExtraCardList();autoSelectHSeries();}
+}
+
+function useRecommendedH(){var sel=document.getElementById('vp-select');if(sel){sel.value='none';autoSelectHSeries();updateVPUI();}}
+
+function getHCards(){
+  var val=document.getElementById('vp-select').value;
+  var vp=vpMap[val];
+  if(!vp||!vp.hSeries) return {items:[],total:0};
+  var cfg=window._hAutoConfig;
+  if(!cfg) return {items:[],total:0};
+  return {items:[].concat(cfg.inputItems,cfg.outputItems,cfg.extraItems),total:cfg.total};
+}
+
+function vpMatchesReq(vp){
+  if(vp.isAsync){
+    var needsAdv=(vpReq.HDMI20||0)>0||(vpReq.DP||0)>0||(vpReq.DVI||0)>0||(vpReq.SDI||0)>0||(vpReq.VGA||0)>0;
+    if(needsAdv) return false;
+    if(vp.key==='TB50'&&(vpReq.HDMI||0)>0) return false;
+    if(vp.key==='TB60'&&(vpReq.HDMI||0)>1) return false;
+    if(document.getElementById('req-preview').checked) return false;
+    if(document.getElementById('req-redundant-psu').checked) return false;
+    return true;
+  }
+  var reqToCards={HDMI:{ppc:4},HDMI20:{ppc:1},DP:{ppc:2},DVI:{ppc:4},SDI:{ppc:4},VGA:{ppc:4}};
+  var isn=0;
+  var keys=Object.keys(vpReq);
+  for(var i=0;i<keys.length;i++){
+    var type=keys[i],needed=vpReq[type];
+    if(needed===0) continue;
+    if(vp.hSeries){var ppc=reqToCards[type]?reqToCards[type].ppc:1;isn+=Math.ceil(needed/ppc);}
+    else{if((vp.inputs[type]||0)<needed) return false;}
+  }
+  if(vp.hSeries&&isn>(vp.inputSlots||0)) return false;
+  if(document.getElementById('req-preview').checked&&!vp.hSeries) return false;
+  if(document.getElementById('req-redundant-psu').checked){
+    if(!vp.hSeries) return false;
+    if(H_SERIES_ORDER.indexOf(vp.key)<H_SERIES_ORDER.indexOf('H5')) return false;
+  }
+  return true;
+}
+
+function filterVPByReq(){var totalPx=lastCalc&&lastCalc.totalPx?lastCalc.totalPx:0;updateVPOptions(totalPx);updateVPAutoRec(totalPx);}
+
+function updateVPOptions(totalPx){
+  var sel=document.getElementById('vp-select');
+  var prev=sel.value;
+  sel.innerHTML='<option value="none">— Tanpa Video Processor —</option>';
+  var hasAnyReq=Object.values(vpReq).some(function(v){return v>0;})||document.getElementById('req-preview').checked;
+  var compatible=vpList.filter(function(v){
+    if(v.maxPx<totalPx) return false;
+    if(hasAnyReq&&!vpMatchesReq(v)) return false;
+    return true;
+  });
+  var countEl=document.getElementById('vp-match-count');
+  if(countEl) countEl.textContent=compatible.length>0?'('+compatible.length+' kompatibel)':'';
+  var list=compatible.length>0?compatible:vpList.filter(function(v){return v.maxPx>=totalPx;});
+  var groups={};
+  list.forEach(function(v){if(!groups[v.group]) groups[v.group]=[];groups[v.group].push(v);});
+  Object.keys(groups).forEach(function(grpName){
+    var grp=document.createElement('optgroup');grp.label=grpName;
+    groups[grpName].forEach(function(v){
+      var o=document.createElement('option');o.value=v.key;
+      if(v.hSeries) o.textContent=v.label+' · '+v.inputSlots+' in-slot · '+v.outputSlots+' out-slot · 4K · '+fmtRp(v.price);
+      else o.textContent=v.label+' · '+(v.ports||'?')+'x RJ45 · '+fmtRp(v.price);
+      grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  });
+  var still=Array.from(sel.options).filter(function(o){return o.value===prev;})[0];
+  if(still) sel.value=prev;
+  else if(prev!=='none'){sel.value='none';updateVPUI();}
+}
+
+function adjReq(type,delta){
+  vpReq[type]=Math.max(0,vpReq[type]+delta);
+  document.getElementById('req-'+type).textContent=vpReq[type];
+  filterVPByReq();
+  var totalPx=lastCalc&&lastCalc.totalPx?lastCalc.totalPx:0;
+  updateVPAutoRec(totalPx);
+  var val=document.getElementById('vp-select').value;
+  if(vpMap[val]&&vpMap[val].hSeries) autoSelectHSeries();
+}
+
+function updateMaintToolUI(p){
+  var wrap=document.getElementById('maint-tool-wrap');
+  if(!p){wrap.style.display='none';return;}
+  var isCOB=p.ledType&&p.ledType.toUpperCase().indexOf('COB')>=0;
+  var tool=isCOB?maintTools.COB:maintTools.SMD;
+  wrap.style.display='';
+  document.getElementById('maint-tool-label').textContent=tool.label+' — '+fmtRp(tool.price);
+  document.getElementById('maint-tool-info').textContent=tool.desc;
+}
+
+function getMaintTool(p){
+  var checked=document.getElementById('maint-tool-check').checked;
+  if(!checked||!p) return null;
+  var isCOB=p.ledType&&p.ledType.toUpperCase().indexOf('COB')>=0;
+  return isCOB?maintTools.COB:maintTools.SMD;
+}
+
+function filterProducts(){
+  var env=document.getElementById('env').value;
+  var ps=document.getElementById('pitch'),prev=ps.value;
+  ps.innerHTML='';
+  var pitches=[];
+  products.forEach(function(p){if(p.env===env&&pitches.indexOf(p.pitch)<0) pitches.push(p.pitch);});
+  pitches.forEach(function(pitch){var o=document.createElement('option');o.value=pitch;o.textContent=pitch;ps.appendChild(o);});
+  if(Array.from(ps.options).filter(function(o){return o.value===prev;}).length) ps.value=prev;
+  var poleWrap=document.getElementById('pole-controls-wrap');
+  if(poleWrap){
+    poleWrap.style.display=env==='Outdoor'?'':'none';
+    if(env==='Outdoor'){vizState.offY=vizState.poleH;var oYEl=document.getElementById('viz-scrOffY-cm');if(oYEl) oYEl.value=Math.round(vizState.poleH);updatePoleInfoText();}
+    else{vizState.offY=100;vizState.wallH=300;var oYEl2=document.getElementById('viz-scrOffY-cm');if(oYEl2) oYEl2.value=100;var wHEl=document.getElementById('viz-wallH-cm');if(wHEl) wHEl.value=300;}
+  }
+  filterByPitch();
+}
+
+function filterByPitch(){
+  var env=document.getElementById('env').value,pitch=document.getElementById('pitch').value;
+  var ms=document.getElementById('modelsel'),prev=ms.value;
+  ms.innerHTML='';
+  products.filter(function(p){return p.env===env&&p.pitch===pitch;}).forEach(function(p){
+    var o=document.createElement('option');o.value=p.model;
+    o.textContent=p.model+' ['+(p.tkdn==="TKDN"?"TKDN":"Non-TKDN")+']';
+    ms.appendChild(o);
+  });
+  if(Array.from(ms.options).filter(function(o){return o.value===prev;}).length) ms.value=prev;
+  updateCalc();
+}
+
+function getProduct(){return products.filter(function(p){return p.model===document.getElementById('modelsel').value;})[0];}
+
+function getVP(){
+  var val=document.getElementById('vp-select').value;
+  if(val==='none'||!val) return {key:'none',price:0};
+  var vp=vpMap[val];
+  if(!vp) return {key:'none',price:0};
+  return {key:val,price:vp.price,ports:vp.ports||0};
+}
+
+function updateCalc(){
+  var p=getProduct();if(!p) return;
+  var isTKDN=p.tkdn==="TKDN";
+  var tkdnClass=isTKDN?"tkdn":"nontkdn";
+  var tkdnLabel=isTKDN?"TKDN":"Non TKDN";
+  document.getElementById('product-info').innerHTML='<div class="product-model">'+p.model+' <span class="tkdn-badge '+tkdnClass+'">'+tkdnLabel+'</span></div><div class="product-name">MAXHUB '+p.model+' - '+p.name+'</div>';
+  document.getElementById('spec-tags').innerHTML='<span class="spec-tag">Pitch: '+p.pitch+'</span><span class="spec-tag">LED: '+p.ledType+'</span><span class="spec-tag">Brightness: '+fmt(p.brightness)+' nits</span><span class="spec-tag">Contrast: '+p.contrast+'</span><span class="spec-tag">Refresh: '+p.refresh+' Hz</span><span class="spec-tag">Cabinet: '+p.cW+'x'+p.cH+' mm</span><span class="spec-tag">Berat: '+p.weight+' kg/unit</span>';
+  vizState.cW=p.cW/10;vizState.cH=p.cH/10;
+  var qW=vizState.qW,qH=vizState.qH,total=qW*qH;
+  var sW=qW*p.cW,sH=qH*p.cH;
+  var resW=qW*p.pxW,resH=qH*p.pxH,totalPx=resW*resH;
+  var diag=Math.round(Math.sqrt((sW/1000)*(sW/1000)+(sH/1000)*(sH/1000))*39.3701);
+  var powerMax=total*p.maxW,powerAvg=total*p.avgW;
+  var areaSqm=(sW*sH)/1000000;
+  var g=gcd(resW,resH);
+  var arW=resW/g,arH=resH/g;
+  var weight=total*p.weight,srp=p.price*total;
+  var discRate=getDiscountRate(p),discAmt=srp*discRate,afterDisc=srp-discAmt;
+  updateVPOptions(totalPx);updateVPAutoRec(totalPx);
+  var vp=getVP();
+  var vpInfo=(vp.key!=='none'&&vpMap[vp.key])?vpMap[vp.key]:{label:"Tanpa Video Processor",price:0,ports:0,desc:"—"};
+  var vpPrice=vp.price,hc=getHCards();
+  updateMaintToolUI(p);
+  var maintTool=getMaintTool(p),maintPrice=maintTool?maintTool.price:0;
+  buildAddonItems(p.env,areaSqm);
+  var addons=getAddonTotals(areaSqm,p.env);
+  var accessories=getAccessoriesTotals();
+  var grandTotal=srp+vpPrice+hc.total+maintPrice+addons.total+accessories.total;
+  var pitchVal=parseFloat(p.pitch.replace(/[^0-9.]/g,''));
+  var optView=Math.round(pitchVal*3.0*10)/10;
+  lastCalc={p:p,qW:qW,qH:qH,total:total,sW:sW,sH:sH,resW:resW,resH:resH,totalPx:totalPx,diag:diag,powerMax:powerMax,powerAvg:powerAvg,areaSqm:areaSqm,arW:arW,arH:arH,weight:weight,srp:srp,afterDisc:afterDisc,discRate:discRate,discAmt:discAmt,vpKey:vp.key,vpPrice:vpPrice,vpLabel:vpInfo.label,vpPorts:vpInfo.ports||0,hCards:hc,maintTool:maintTool,maintPrice:maintPrice,addons:addons,accessories:accessories,grandTotal:grandTotal};
+  vizSyncFromCalc(sW/1000,sH/1000,diag,areaSqm,resW,resH,g);
+  document.getElementById('metrics').innerHTML='<div class="metric"><div class="metric-label">Cabinet W x H</div><div class="metric-value">'+qW+' x '+qH+'</div><div class="metric-sub">'+fmt(total)+' unit total</div></div><div class="metric"><div class="metric-label">Ukuran Aktual</div><div class="metric-value">'+(sW/1000).toFixed(2)+' x '+(sH/1000).toFixed(2)+'</div><div class="metric-sub">meter (W x H)</div></div><div class="metric"><div class="metric-label">Resolusi Total</div><div class="metric-value">'+fmt(resW)+' x '+fmt(resH)+'</div><div class="metric-sub">'+fmt(totalPx)+' pixel</div></div><div class="metric"><div class="metric-label">Berat Total</div><div class="metric-value">'+fmt(weight)+'</div><div class="metric-sub">kilogram</div></div><div class="metric"><div class="metric-label">Jarak Optimal</div><div class="metric-value">'+optView.toFixed(1)+' m</div><div class="metric-sub">pitch '+pitchVal+' mm x 3.0</div></div>';
+  var recPower=Math.round(powerMax*1.3);
+  document.getElementById('power-bars').innerHTML='<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Konsumsi Daya</div><div class="power-bar-row"><span class="power-bar-label">Max</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--danger)"></div></div><span class="power-bar-val">'+fmt(powerMax)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Typical</span><div class="power-bar-track"><div class="power-bar-fill" style="width:'+Math.round(powerAvg/powerMax*100)+'%;background:var(--accent)"></div></div><span class="power-bar-val">'+fmt(powerAvg)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Rekomendasi</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--warn);opacity:.7"></div></div><span class="power-bar-val">'+fmt(recPower)+' W</span></div><div style="font-size:11px;color:var(--text3);margin-top:4px">PLN min. '+fmt(recPower)+' W (130% dari max)</div>';
+  document.getElementById('warn-box').innerHTML=total<12?'<div class="warn-box">Minimum pembelian 12 cabinet. Saat ini '+total+' cabinet.</div>':'';
+  var vpRow='';
+  if(vpPrice>0){vpRow='<tr><td>'+vpInfo.label+'</td><td>'+fmtRp(vpPrice)+'</td></tr>';if(hc.items.length>0) hc.items.forEach(function(c){vpRow+='<tr><td>&nbsp;&nbsp;- '+c.label+(c.qty>1?' x'+c.qty:'')+'</td><td>'+fmtRp(c.subtotal)+'</td></tr>';});}
+  var maintRow=(!isTKDN&&maintTool)?'<tr><td>'+maintTool.label+'</td><td>'+fmtRp(maintPrice)+'</td></tr>':'';
+  var addonRows='';if(addons.selected) addons.selected.forEach(function(item){addonRows+='<tr><td>'+item.label+'</td><td>'+fmtRp(item.subtotal)+'</td></tr>';});
+  var accRows='';if(accessories.selected) accessories.selected.forEach(function(item){accRows+='<tr><td>'+item.label+'</td><td>'+fmtRp(item.price)+'</td></tr>';});
+  document.getElementById('pricing').innerHTML='<tr><td>Harga / Cabinet (SRP)</td><td>'+fmtRp(p.price)+'</td></tr><tr><td>Jumlah Cabinet</td><td>'+fmt(total)+' unit</td></tr><tr><td>Total Harga SRP LED</td><td>'+fmtRp(srp)+'</td></tr>'+vpRow+maintRow+addonRows+accRows+'<tr class="price-highlight"><td>Total Harga (inc. PPN 11%)</td><td>'+fmtRp(grandTotal)+'</td></tr>';
+  document.getElementById('discount-note').innerHTML='';
+  document.getElementById('price-note').innerHTML=isTKDN?'Harga sudah termasuk PPN 11% · Pembayaran: CBD<br>Sudah termasuk biaya instalasi, testing, commissioning & training<br>Sudah termasuk material instalasi · Area Jabodetabek · Min. 12 cabinet':'Harga sudah termasuk PPN 11% · Pembayaran: CBD<br><strong>Unit Only</strong> · Area Jabodetabek · Min. 12 cabinet';
+}
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+function exportExcel(){
+  if(!lastCalc.p){alert('Silakan hitung dulu.');return;}
+  var c=lastCalc,p=c.p;
+  var quoNo=document.getElementById('quo-no').value;
+  var quoDate=document.getElementById('quo-date').value;
+  var company=document.getElementById('quo-company').value;
+  var pic=document.getElementById('quo-pic').value;
+  var address=document.getElementById('quo-address').value;
+  var phone=document.getElementById('quo-phone').value;
+  var isTKDN=p.tkdn==="TKDN";
+  var fmtNum=function(n){return new Intl.NumberFormat('id-ID').format(Math.round(n));};
+  var descText='MAXHUB '+p.model+' - '+p.env.toUpperCase()+' VIDEOTRON '+p.pitch+' FIX CABINET - PAKET '+(c.sW/1000).toFixed(2).replace('.',',')+' M X '+(c.sH/1000).toFixed(2).replace('.',',')+' M';
+  var tkdnMap={'P1.2':'40,22%','P1.8':'40,32%','P2.5':'43,04%','P4':'43,05%','P6':'42,57%'};
+  var tkdnLabel=isTKDN&&tkdnMap[p.pitch]?'Nilai TKDN : '+tkdnMap[p.pitch]:'Status TKDN : '+p.tkdn;
+  var specText='Spec : Placement : '+p.env+', LED Type : '+p.ledType+', Pixel Pitch (mm) : '+p.pitch.replace('P','')+', Cabinet Resolution : '+p.pxW+' x '+p.pxH+', Cabinet Size (mm) : '+p.cW+' x '+p.cH+', Weight (kg) : '+p.weight+', Contrast : '+p.contrast+', Refresh (Hz) : '+p.refresh+', Brightness (nits) : '+p.brightness+', Max Power (W/unit) : '+p.maxW+', Avg Power (W/unit) : '+p.avgW+', LEDs Life (hrs) : >= '+fmtNum(p.ledLife)+', '+tkdnLabel;
+  var installedText='Ukuran Terpasang :\n-Cabinet: '+c.qW+' x '+c.qH+' (Total '+c.total+')\n-Screen: '+c.sW+' mm x '+c.sH+' mm\n-Resolution: '+c.resW+' x '+c.resH+' ('+fmtNum(c.totalPx)+' px)\n-Diagonal: '+Math.round(c.diag)+' Inch\n-Power Max: '+fmtNum(c.powerMax)+' W\n-Power Typical: '+fmtNum(c.powerAvg)+' W';
+  var tcText=isTKDN?'T&C:\n1. Garansi 1-2 Tahun sejak BAST\n2. Sudah termasuk instalasi & material\n3. Min. 12 Cabinet':'T&C:\n1. Garansi 1-2 Tahun sejak BAST\n2. Cabinet Only (Min. 12 Cabinet)\n3. FOB: Jabodetabek';
+  var D=[];
+  D.push(['','PT. RAJA PIXEL VISION','','','','','','','No.:',quoNo]);
+  D.push(['','Jalan Sidoluhur Raya No. 24, Semarang','','','','','','','Tanggal:',quoDate]);
+  D.push(['','Telp: 0812-1092-7471','','','','','','','Kepada:',company]);
+  D.push(['','Email: mario@rajapixel.com','','','','','','','Alamat:',address]);
+  D.push(['','','','','','','','','UP:',pic]);
+  D.push(['','','','','','','','','Phone:',phone]);
+  D.push([]);D.push(['','','','','','','','','','Surat Penawaran']);D.push([]);
+  D.push(['','No','Category','Brand','Product Description','Qty','Unit','MSRP (inc. PPN)','Total MSRP','Remark']);
+  D.push(['',1,'Videotron '+p.env,'MAXHUB',descText,'1','Set',Math.round(c.srp),Math.round(c.srp),'Ready Stock']);
+  D.push(['','','','',specText]);D.push(['','','','',installedText]);D.push(['','','','',tcText]);
+  var itemNo=2;
+  if(c.vpKey&&c.vpKey!=='none'){var vpI=vpMap[c.vpKey];D.push(['',itemNo++,'Video Processor','NovaStar',c.vpLabel,1,'Unit',Math.round(c.vpPrice),Math.round(c.vpPrice),'']);if(vpI)D.push(['','','','',vpI.desc||'—']);}
+  if(c.hCards&&c.hCards.items.length>0) c.hCards.items.forEach(function(card){D.push(['',itemNo++,'H Series Card','NovaStar',card.label,card.qty,'Unit',Math.round(card.price),Math.round(card.subtotal),'']);});
+  if(!isTKDN&&c.maintTool){D.push(['',itemNo++,'Maintenance Tool','NovaStar',c.maintTool.label,1,'Unit',Math.round(c.maintPrice),Math.round(c.maintPrice),'']);}
+  if(c.addons&&c.addons.selected) c.addons.selected.forEach(function(item){D.push(['',itemNo++,'Layanan','Other',item.label,1,'Lot',Math.round(item.subtotal),Math.round(item.subtotal),'']);D.push(['','','','',item.desc]);});
+  if(c.accessories&&c.accessories.selected) c.accessories.selected.forEach(function(item){D.push(['',itemNo++,'Accessories',item.brand||'MAXHUB',item.label,1,'Unit',Math.round(item.price),Math.round(item.price),'']);});
+  var msrpTotal=Math.round(c.srp)+Math.round(c.vpPrice)+(c.hCards?c.hCards.total:0)+(c.maintTool?Math.round(c.maintPrice):0)+(c.addons?c.addons.total:0)+(c.accessories?c.accessories.total:0);
+  D.push(['','','','','','','','MSRP Total:',msrpTotal]);D.push([]);
+  D.push(['','','','','','','','','Hormat Kami,']);D.push([]);D.push([]);D.push([]);
+  D.push(['','','','','','','','','PT. RAJA PIXEL VISION']);D.push([]);
+  D.push(['','KETERANGAN']);D.push(['','1.','Harga sudah termasuk PPN 11%']);D.push(['','2.','Pembayaran: CBD']);D.push(['','3.','Ongkos kirim area Jabodetabek dan Semarang']);
+  var ws=XLSX.utils.aoa_to_sheet(D);
+  ws['!cols']=[{wch:2},{wch:5},{wch:20},{wch:28},{wch:65},{wch:20},{wch:20},{wch:20},{wch:20},{wch:24}];
+  var range=XLSX.utils.decode_range(ws['!ref']||'A1');
+  for(var R=range.s.r;R<=range.e.r;R++){var ca=XLSX.utils.encode_cell({r:R,c:4});if(!ws[ca]) continue;ws[ca].s={alignment:{wrapText:true,vertical:'top',horizontal:'left'}};}
+  ws['!rows']=D.map(function(row){var v=row[4];if(v&&typeof v==='string'&&v.length>40){var lines=v.split('\n').reduce(function(a,l){return a+Math.max(1,Math.ceil(l.length/85));},0);return{hpt:Math.max(20,lines*14+4)};}return{hpt:16};});
+  ws['!merges']=[{s:{r:0,c:1},e:{r:0,c:8}},{s:{r:1,c:1},e:{r:1,c:8}},{s:{r:2,c:1},e:{r:2,c:8}},{s:{r:3,c:1},e:{r:3,c:8}},{s:{r:4,c:1},e:{r:4,c:8}},{s:{r:5,c:1},e:{r:5,c:8}}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Quotation');
+  XLSX.writeFile(wb,'Quotation_MAXHUB_'+p.model+'_'+quoNo.replace(/\//g,'-')+'.xlsx');
+}
+
+// ─── PDF DATASHEET ────────────────────────────────────────────────────────────
+function exportDatasheetPDF(){
+  if(!lastCalc.p){alert('Silakan hitung dulu sebelum export.');return;}
+  if(!window.jspdf||!window.jspdf.jsPDF){alert('jsPDF belum siap, coba lagi sebentar.');return;}
+
+  var jsPDF=window.jspdf.jsPDF;
+  var c=lastCalc,p=c.p;
+  var isTKDN=p.tkdn==="TKDN";
+  var fmtNum=function(n){return new Intl.NumberFormat('id-ID').format(Math.round(n));};
+  var quoDate=document.getElementById('quo-date').value;
+  var company=document.getElementById('quo-company').value||'Indonesia';
+  var vpInfo=(c.vpKey&&c.vpKey!=='none'&&vpMap[c.vpKey])?vpMap[c.vpKey]:null;
+  var tkdnMap={'P1.2':'40.22%','P1.8':'40.32%','P2.5':'43.04%','P4':'43.05%','P6':'42.57%'};
+  var optView=Math.round(parseFloat(p.pitch.replace('P',''))*3.0*10)/10;
+  var arWr=Math.round(c.arW/gcd(c.arW,c.arH)),arHr=Math.round(c.arH/gcd(c.arW,c.arH));
+
+  // Layout constants
+  var PW=210,PH=297,ML=18,MR=18,MT=22,CW=210-18-18;
+  var BLUE=[0,86,179],LBLUE=[220,232,248],DGRAY=[80,80,80],LGRAY=[245,245,245];
+
+  var doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+  function drawHeader(pageLabel){
+    doc.setDrawColor(0,86,179);doc.setLineWidth(0.4);doc.line(ML,MT-4,PW-MR,MT-4);
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(0,86,179);doc.text('MAXHUB',ML,MT-7);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text(pageLabel,PW-MR,MT-7,{align:'right'});
+    doc.setDrawColor(200,200,200);doc.setLineWidth(0.2);doc.line(ML,MT-2,PW-MR,MT-2);
+  }
+
+  function drawFooter(pageNum,total){
+    var fy=PH-10;
+    doc.setDrawColor(200,200,200);doc.setLineWidth(0.2);doc.line(ML,fy-3,PW-MR,fy-3);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+    doc.text('www.maxhub.com  |  PT. Raja Pixel Vision  |  mario@rajapixel.com  |  0812-1092-7471',ML,fy);
+    doc.text(pageNum+' / '+total,PW-MR,fy,{align:'right'});
+  }
+
+  function secHeader(y,txt){
+    doc.setFillColor(0,86,179);doc.rect(ML,y,CW,7,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(txt,ML+3,y+4.8);
+    return y+7;
+  }
+
+  function subHdr(y,txt){
+    doc.setFillColor(220,232,248);doc.rect(ML,y,CW,6,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(0,0,0);doc.text(txt,ML+3,y+4.2);
+    return y+6;
+  }
+
+  function specRow(y,lbl,val,alt){
+    var rh=6;
+    if(alt){doc.setFillColor(245,245,245);doc.rect(ML,y,CW,rh,'F');}
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(80,80,80);doc.text(String(lbl),ML+3,y+4.2);
+    doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);doc.text(String(val),ML+CW*0.55,y+4.2);
+    doc.setDrawColor(220,220,220);doc.setLineWidth(0.1);doc.line(ML,y+rh,ML+CW,y+rh);
+    return y+rh;
+  }
+
+  function solRow(y,no,item,model,qty,unit,alt){
+    var rh=7;
+    if(alt){doc.setFillColor(245,245,245);doc.rect(ML,y,CW,rh,'F');}
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(0,0,0);
+    var cols=[2,12,62,122,152];
+    var vals=[String(no),String(item),String(model),String(qty),String(unit)];
+    for(var i=0;i<vals.length;i++) doc.text(vals[i],ML+cols[i],y+4.8);
+    doc.setDrawColor(220,220,220);doc.setLineWidth(0.1);doc.line(ML,y+rh,ML+CW,y+rh);
+    return y+rh;
+  }
+
+  // ── PAGE 1: Project Description ────────────────────────────────────────────
+  drawHeader('Project Description');
+  var y=MT+8;
+  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(0,0,0);
+  doc.text('LED CONFIGURATION',PW/2,y+10,{align:'center'});
+  y+=26;
+  var fields=[['Define Environment:',p.env],['Scene:',p.env==='Indoor'?'Conference Room / Indoor Event':'Outdoor Digital Billboard'],['Special Requirement:','N/A'],['Location:',company],['Project Description:','N/A']];
+  fields.forEach(function(f){
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,80,80);doc.text(f[0],ML,y);
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(0,0,0);doc.text(f[1],ML,y+8);
+    y+=22;
+  });
+  drawFooter(1,4);
+
+  // ── PAGE 2: LED Configuration Rendering ────────────────────────────────────
+  doc.addPage();
+  drawHeader('LED Configuration Rendering');
+  y=MT+6;
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text('Diagonal: '+Math.round(c.diag)+' Inch',ML,y+5);
+  y+=12;
+
+  var diagX=ML+30,diagY=y,safeH=Math.min(75,(CW-30-22)*(c.sH/c.sW));
+  var scaledW=safeH*(c.sW/c.sH);
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.setFillColor(235,235,235);
+  doc.rect(diagX,diagY,scaledW+16,safeH+16,'FD');
+  doc.setFillColor(20,50,120);doc.rect(diagX+8,diagY+8,scaledW,safeH,'F');
+  doc.setDrawColor(70,110,200);doc.setLineWidth(0.2);
+  if(c.qW>1){for(var i=1;i<c.qW;i++){var gx=diagX+8+scaledW*(i/c.qW);doc.line(gx,diagY+8,gx,diagY+8+safeH);}}
+  if(c.qH>1){for(var j=1;j<c.qH;j++){var gy=diagY+8+safeH*(j/c.qH);doc.line(diagX+8,gy,diagX+8+scaledW,gy);}}
+  // human
+  var hx=diagX-12,hy=diagY+8,hh=Math.min(safeH*0.85,28);
+  doc.setDrawColor(100,100,100);doc.setLineWidth(0.5);
+  doc.circle(hx,hy+hh*0.07,hh*0.07,'S');
+  doc.line(hx,hy+hh*0.14,hx,hy+hh*0.6);
+  doc.line(hx-hh*0.12,hy+hh*0.25,hx+hh*0.12,hy+hh*0.25);
+  doc.line(hx,hy+hh*0.6,hx-hh*0.1,hy+hh);doc.line(hx,hy+hh*0.6,hx+hh*0.1,hy+hh);
+  doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(100,100,100);doc.text('183cm',hx-5,hy+hh+3);
+  // dimensions
+  var dY=diagY+safeH+16+6;
+  doc.setDrawColor(100,100,100);doc.setLineWidth(0.3);
+  doc.line(diagX+8,dY,diagX+8+scaledW,dY);doc.line(diagX+8,dY-2,diagX+8,dY+2);doc.line(diagX+8+scaledW,dY-2,diagX+8+scaledW,dY+2);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(0,0,0);
+  doc.text((c.sW/1000).toFixed(2)+' m',diagX+8+scaledW/2,dY+4,{align:'center'});
+  var hDX=diagX+8+scaledW+12;
+  doc.line(hDX,diagY+8,hDX,diagY+8+safeH);doc.line(hDX-2,diagY+8,hDX+2,diagY+8);doc.line(hDX-2,diagY+8+safeH,hDX+2,diagY+8+safeH);
+  doc.text((c.sH/1000).toFixed(2)+' m',hDX+2,diagY+8+safeH/2+2);
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Best Viewing Distance',ML,diagY+safeH+16+13);
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,86,179);
+  doc.text(optView+' m',ML,diagY+safeH+16+19);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
+  doc.text('Resolution: '+c.resW+' x '+c.resH,diagX+8+scaledW/2,dY+9,{align:'center'});
+  doc.text('Aspect Ratio: '+arWr+':'+arHr,diagX+8+scaledW/2,dY+14,{align:'center'});
+  y=diagY+safeH+16+28;
+  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(0,0,0);doc.text('Solution',PW/2,y,{align:'center'});
+  y+=6;
+  doc.setFillColor(0,86,179);doc.rect(ML,y,CW,8,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);
+  var hcols=[2,12,62,122,152];
+  var hhdrs=['No.','Item','Model','Qty','Unit'];
+  for(var hi=0;hi<hhdrs.length;hi++) doc.text(hhdrs[hi],ML+hcols[hi],y+5.5);
+  y+=8;
+  y=solRow(y,'1','LED Display',p.model,c.total,'Pcs',false);
+  y=solRow(y,'2','Mounting Device','Wall-mounted Bracket','/','SET',true);
+  if(vpInfo) y=solRow(y,'3','Video Wall Processor',vpInfo.label,1,'PCS',false);
+  drawFooter(2,4);
+
+  // ── PAGE 3: Screen Specification ───────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Screen Specification');
+  y=MT+4;
+  y=secHeader(y,'Specifications');
+  y=specRow(y,'Screen Configuration (WxH)',c.qW+' Unit x '+c.qH+' Unit',false);
+  y=specRow(y,'Total Quantity of LED Panel',c.total+' Unit',true);
+  y+=3;y=subHdr(y,'Display Wall Dimensions');
+  y=specRow(y,'Diagonal',Math.round(c.diag)+' Inch',false);
+  y=specRow(y,'Aspect Ratio',arWr+':'+arHr,true);
+  y=specRow(y,'Dimensions',(c.sW/1000).toFixed(2)+' m x '+(c.sH/1000).toFixed(2)+' m',false);
+  y=specRow(y,'Display Area',c.areaSqm.toFixed(2)+' m2',true);
+  y=specRow(y,'Weight',Math.round(c.weight)+' Kg',false);
+  y=specRow(y,'Pixel Pitch',p.pitch.replace('P','')+' mm',true);
+  y+=3;y=subHdr(y,'Display Information');
+  y=specRow(y,'Screen Resolution',c.resW+' x '+c.resH,false);
+  y=specRow(y,'Brightness',p.brightness+' Nit',true);
+  y=specRow(y,'Color Processing Depth','13-16 Bit',false);
+  y=specRow(y,'Contrast',p.contrast,true);
+  y=specRow(y,'Refresh Rate Frequency',p.refresh+' Hz',false);
+  y=specRow(y,'Viewing Angle (H/V)','170/170 Degree',true);
+  y=specRow(y,'Recommend Viewing Distance',optView+' m',false);
+  y+=3;y=subHdr(y,'Power Requirements');
+  y=specRow(y,'Max',fmtNum(c.powerMax)+' Watts',false);
+  y=specRow(y,'Typical',fmtNum(c.powerAvg)+' Watts',true);
+  y=specRow(y,'Recommended PLN (x1.3)',fmtNum(Math.round(c.powerMax*1.3))+' Watts',false);
+  y+=3;y=subHdr(y,'Installation');
+  y=specRow(y,'Wall-mounted','Wall-bracket accessory included',false);
+  y=specRow(y,'LED Module and Receiving Card','Front',true);
+  y+=3;y=subHdr(y,'TKDN Information');
+  y=specRow(y,'Status',p.tkdn,false);
+  if(isTKDN&&tkdnMap[p.pitch]) y=specRow(y,'Nilai TKDN',tkdnMap[p.pitch],true);
+  drawFooter(3,4);
+
+  // ── PAGE 4: Cabinet Specification ──────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Cabinet Specification');
+  y=MT+4;
+  doc.setFillColor(0,60,140);doc.rect(ML,y,CW,10,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text(p.env+' LED Display — MAXHUB '+p.model,ML+4,y+6.8);
+  y+=14;
+  y=secHeader(y,'Product Parameter');
+  y=subHdr(y,'Physical Parameter');
+  var alt=false;
+  var physRows=[['Pixel Composition',p.ledType],['Pixel Pitch (mm)',p.pitch.replace('P','')],['Cabinet Resolution (dots)',p.pxW+' x '+p.pxH],['Pixel Density (dots/m2)',Math.round(1000000/(Math.pow(parseFloat(p.pitch.replace('P','')),2)))],['Cabinet Size (W x H x D) mm',p.cW+' x '+p.cH+' x '+(p.env==='Outdoor'?68:31)],['Cabinet Material',p.env==='Outdoor'?'Aluminum Profile':'Die-Casting Aluminum Alloy'],['Cabinet Weight (Single)',p.weight+' kg'],['Maintenance Mode','Fully Front Access']];
+  physRows.forEach(function(r){y=specRow(y,r[0],r[1],alt);alt=!alt;});
+  y+=3;y=subHdr(y,'Optical Parameter');alt=false;
+  var optRows=[['Color Processing Depth (Bit)','13~16'],['Contrast',p.contrast],['Refresh Rate Frequency (Hz)',p.refresh],['White Balance Brightness (nit)',p.brightness],['Viewing Angle (H/V deg)','170/170']];
+  optRows.forEach(function(r){y=specRow(y,r[0],r[1],alt);alt=!alt;});
+  y+=3;y=subHdr(y,'Electrical Parameter');alt=false;
+  var elecRows=[['AC Input Voltage (V)','AC100~240V @ 50/60Hz'],['Cabinet Max Power (W/Unit)',p.maxW],['Cabinet Avg Power (W/Unit)',p.avgW],['Total Screen Max Power (W)',fmtNum(c.powerMax)],['Total Screen Avg Power (W)',fmtNum(c.powerAvg)]];
+  elecRows.forEach(function(r){y=specRow(y,r[0],r[1],alt);alt=!alt;});
+  y+=3;y=subHdr(y,'Operation Environment');alt=false;
+  var envRows=[['Storage Temperature (C)','-10~60'],['Working Temperature (C)',p.env==='Outdoor'?'-20~+50':'-10~40'],['Storage Humidity (RH)','10%~85% No Condensation'],['Working Humidity (RH)','10%~80% No Condensation'],['LEDs Life Time (hrs.)','>='+fmtNum(p.ledLife)]];
+  envRows.forEach(function(r){y=specRow(y,r[0],r[1],alt);alt=!alt;});
+  y+=6;
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Note: Actual parameters may vary. Brightness and power may differ +-15% due to LED batch differences.',ML,y);
+  y+=8;
+  doc.setFillColor(245,245,245);doc.rect(ML,y,CW,18,'F');
+  doc.setDrawColor(200,200,200);doc.rect(ML,y,CW,18,'S');
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(0,0,0);
+  doc.text('Disiapkan oleh:',ML+4,y+5);
+  doc.setFont('helvetica','normal');
+  doc.text('PT. Raja Pixel Vision',ML+4,y+10);
+  doc.text('mario@rajapixel.com  |  0812-1092-7471  |  Semarang',ML+4,y+15);
+  doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
+  doc.text('Tanggal: '+quoDate,PW-MR-4,y+10,{align:'right'});
+  doc.text('Datasheet MAXHUB '+p.model,PW-MR-4,y+15,{align:'right'});
+  drawFooter(4,4);
+
+  doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
+}
+
+// ─── VISUALISASI ──────────────────────────────────────────────────────────────
+var vizState={wallW:800,wallH:500,offY:100,cW:60,cH:33.75,qW:1,qH:1,scrWcm:480,scrHcm:202.5,diagInch:0,resW:0,resH:0,g:1,poleType:'single',poleH:300,poleW:12};
+
+function applyResPreset(preset){
+  var p=getProduct();if(!p){alert('Pilih produk terlebih dahulu.');return;}
+  var tW=preset==='4K'?3840:1920,tH=preset==='4K'?2160:1080;
+  var nqW=Math.max(1,Math.round(tW/p.pxW)),nqH=Math.max(1,Math.round(tH/p.pxH));
+  vizState.qW=nqW;vizState.qH=nqH;
+  document.getElementById('viz-qW').textContent=nqW;document.getElementById('viz-qH').textContent=nqH;
+  var fhdBtn=document.getElementById('preset-btn-fhd'),k4Btn=document.getElementById('preset-btn-4k');
+  fhdBtn.className='preset-btn preset-btn-fhd'+(preset==='FHD'?' active':'');
+  k4Btn.className='preset-btn preset-btn-4k'+(preset==='4K'?' active':'');
+  var aW=nqW*p.pxW,aH=nqH*p.pxH,exact=(aW===tW&&aH===tH);
+  var infoEl=document.getElementById('preset-result-info');
+  if(infoEl){infoEl.textContent=(exact?'':'~')+aW+'x'+aH+' px ('+nqW+'x'+nqH+' cab)';infoEl.style.color=exact?'var(--accent2)':'var(--warn)';}
+  updateCalc();
+}
+
+function vizAdjCm(k,d){
+  if(k==='poleH'){vizState.poleH=Math.max(50,vizState.poleH+d);vizState.offY=vizState.poleH;var el=document.getElementById('viz-scrOffY-cm');if(el) el.value=Math.round(vizState.poleH);}
+  else if(k==='poleW'){vizState.poleW=Math.max(10,Math.min(20,vizState.poleW+d));}
+  else{vizState[k]=Math.max(10,vizState[k]+d);}
+  vizRenderGrid();
+}
+
+function setPoleType(type){
+  vizState.poleType=type;
+  ['single','double','triple','none'].forEach(function(t){
+    var btn=document.getElementById('pole-btn-'+t);if(!btn) return;
+    if(t===type){btn.style.background='rgba(245,166,35,0.2)';btn.style.border='1px solid rgba(245,166,35,0.5)';btn.style.color='var(--warn)';}
+    else{btn.style.background='var(--surface2)';btn.style.border='1px solid var(--border)';btn.style.color='var(--text2)';}
+  });
+  var pw=document.getElementById('pole-width-wrap');
+  if(pw) pw.style.display=type!=='none'?'flex':'none';
+  if(type==='none'){vizState.offY=100;vizState.wallH=500;var o=document.getElementById('viz-scrOffY-cm');if(o) o.value=100;var wh=document.getElementById('viz-wallH-cm');if(wh) wh.value=500;}
+  if(type!=='none'){vizState.offY=vizState.poleH;var o2=document.getElementById('viz-scrOffY-cm');if(o2) o2.value=Math.round(vizState.poleH);}
+  updatePoleInfoText();vizRenderGrid();
+}
+
+function updatePoleInfoText(){
+  var el=document.getElementById('pole-info-text');if(!el) return;
+  var msgs={single:'Single Pole · D'+Math.round(vizState.poleW)+'" · Tinggi '+Math.round(vizState.poleH)+' cm',double:'Double Pole · D'+Math.round(vizState.poleW)+'" x2 · Tinggi '+Math.round(vizState.poleH)+' cm',triple:'Triple Pole · D'+Math.round(vizState.poleW)+'" x3 · Tinggi '+Math.round(vizState.poleH)+' cm',none:'Tanpa tiang'};
+  el.textContent=msgs[vizState.poleType]||'';
+}
+
+function vizAdjCab(k,d){
+  vizState[k]=Math.max(1,vizState[k]+d);
+  vizState.scrWcm=Math.round(vizState.qW*vizState.cW);
+  vizState.scrHcm=Math.round(vizState.qH*vizState.cH);
+  updateCalc();
+}
+
+function vizSetCm(k,v){
+  var val=parseFloat(v);if(isNaN(val)||val<5) return;
+  if(k==='poleH'){vizState.poleH=Math.max(50,val);vizState.offY=vizState.poleH;var el=document.getElementById('viz-scrOffY-cm');if(el&&document.activeElement!==el) el.value=Math.round(vizState.poleH);updatePoleInfoText();}
+  else if(k==='poleW'){vizState.poleW=Math.max(10,Math.min(20,val));updatePoleInfoText();}
+  else{if(val<10) return;vizState[k]=val;if(k==='offY'&&vizState.poleType!=='none'){vizState.poleH=val;updatePoleInfoText();}}
+  vizRenderGrid();
+}
+
+function vizSyncFromCalc(sWm,sHm,diagInch,areaSqm,resW,resH,g){
+  var c=lastCalc;
+  if(c&&c.p){vizState.cW=c.p.cW/10;vizState.cH=c.p.cH/10;vizState.qW=c.qW;vizState.qH=c.qH;vizState.scrWcm=Math.round(c.sW/10);vizState.scrHcm=Math.round(c.sH/10);}
+  else{vizState.scrWcm=Math.round(sWm*100);vizState.scrHcm=Math.round(sHm*100);}
+  vizState.diagInch=diagInch||0;vizState.resW=resW||0;vizState.resH=resH||0;vizState.g=g||1;
+  vizRenderGrid();
+}
+
+function vizGcd(a,b){return b<1?a:vizGcd(b,a%b);}
+
+function drawRealisticPole(cx, topY, baseY, w){
+  var tw=w*0.88, bw=w;
+  var path='M'+(cx-tw/2)+','+topY+' L'+(cx+tw/2)+','+topY+' L'+(cx+bw/2)+','+baseY+' L'+(cx-bw/2)+','+baseY+' Z';
+  var s='<path d="'+path+'" fill="url(#poleSteel)" stroke="#1c1f29" stroke-width="0.6"/>';
+  // highlight stripe
+  s+='<path d="M'+(cx-tw*0.18)+','+topY+' L'+(cx-tw*0.05)+','+topY+' L'+(cx-bw*0.05)+','+baseY+' L'+(cx-bw*0.18)+','+baseY+' Z" fill="#d8dde8" opacity="0.45"/>';
+  // top cap / bracket plate
+  var capH=Math.max(3,w*0.45);
+  s+='<rect x="'+(cx-tw/2-3)+'" y="'+(topY-capH)+'" width="'+(tw+6)+'" height="'+capH+'" fill="#23262f" rx="1"/>';
+  s+='<rect x="'+(cx-tw/2-3)+'" y="'+(topY-capH)+'" width="'+(tw+6)+'" height="1.2" fill="#5a6070"/>';
+  // base flange
+  var fW=Math.max(w*2.6,8), fH=Math.max(4,w*0.7);
+  s+='<rect x="'+(cx-fW/2)+'" y="'+(baseY-fH)+'" width="'+fW+'" height="'+fH+'" fill="#2a2e3a" stroke="#11131a" stroke-width="0.5" rx="1"/>';
+  s+='<rect x="'+(cx-fW/2-1.5)+'" y="'+(baseY-1.5)+'" width="'+(fW+3)+'" height="2" fill="#16181f"/>';
+  // bolts
+  var nBolts=4, br=Math.max(0.9,w*0.09);
+  for(var i=0;i<nBolts;i++){
+    var bx=cx-fW/2+fW*(0.12+i*(0.76/(nBolts-1)));
+    s+='<circle cx="'+bx+'" cy="'+(baseY-fH*0.55)+'" r="'+br+'" fill="#0a0c12"/>';
+    s+='<circle cx="'+(bx-br*0.25)+'" cy="'+(baseY-fH*0.55-br*0.25)+'" r="'+(br*0.35)+'" fill="#7a808e" opacity="0.7"/>';
+  }
+  // ground shadow
+  s+='<ellipse cx="'+cx+'" cy="'+(baseY+1.5)+'" rx="'+(fW*0.65)+'" ry="2.2" fill="#000" opacity="0.32"/>';
+  return s;
+}
+
+function vizRenderGrid(){
+  var s=vizState;
+  var isOutdoor=(lastCalc&&lastCalc.p)?lastCalc.p.env==='Outdoor':document.getElementById('env').value==='Outdoor';
+  var hasPole=isOutdoor&&s.poleType!=='none';
+  var checkOverflow=!hasPole;
+  var oW=checkOverflow&&s.scrWcm>s.wallW,oH=checkOverflow&&(s.scrHcm+s.offY)>s.wallH,anyOvf=oW||oH;
+
+  var wWEl=document.getElementById('viz-wallW-cm'),wHEl=document.getElementById('viz-wallH-cm'),oYEl=document.getElementById('viz-scrOffY-cm'),qWEl=document.getElementById('viz-qW'),qHEl=document.getElementById('viz-qH'),pwEl=document.getElementById('viz-poleW-cm');
+  if(wWEl&&document.activeElement!==wWEl) wWEl.value=Math.round(s.wallW);
+  if(wHEl&&document.activeElement!==wHEl) wHEl.value=Math.round(s.wallH);
+  if(oYEl&&document.activeElement!==oYEl) oYEl.value=Math.round(s.offY);
+  if(pwEl&&document.activeElement!==pwEl) pwEl.value=Math.round(s.poleW);
+  if(qWEl) qWEl.textContent=s.qW;if(qHEl) qHEl.textContent=s.qH;
+
+  var VW=580,VH=320,mL=70,mR=58,mT=44,mB=60;
+  var dW=VW-mL-mR,dH=VH-mT-mB;
+  var ewH=hasPole?s.poleH+s.scrHcm+100:s.wallH;
+  var ewW=hasPole?s.scrWcm+630:s.wallW;
+  var sc=Math.min(dW/ewW,dH/ewH);
+  var baseY=mT+dH;
+  var wpW=ewW*sc,wpH=ewH*sc;
+  var wallX=mL+(dW-wpW)*0.5,wallY=baseY-wpH;
+  var spW=s.scrWcm*sc,spH=s.scrHcm*sc;
+  var scrX=wallX+(wpW-spW)/2,scrY=baseY-s.offY*sc-spH;
+  var cpW=s.cW*sc,cpH=s.cH*sc;
+  var pitchMm=(lastCalc&&lastCalc.p)?parseFloat(lastCalc.p.pitch.replace(/[^0-9.]/g,'')):2.5;
+  var optV=Math.round(pitchMm*3000/1000*10)/10;
+  var di=s.diagInch||Math.round(Math.sqrt((s.scrWcm/100)*(s.scrWcm/100)+(s.scrHcm/100)*(s.scrHcm/100))*39.3701);
+  var rW=s.resW||s.qW*120,rH=s.resH||s.qH*120;
+
+  var svg='<defs>'
+    +'<marker id="va" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#4a5060" stroke-width="1.2"/></marker>'
+    +'<marker id="va2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#4a5060" stroke-width="1.2"/></marker>'
+    +'<marker id="vag" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker>'
+    +'<marker id="vag2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker>'
+    +'<marker id="vaO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker>'
+    +'<marker id="vaO2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker>'
+    +'<linearGradient id="poleSteel" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f2330"/><stop offset="22%" stop-color="#5a6070"/><stop offset="48%" stop-color="#a8aebc"/><stop offset="78%" stop-color="#5a6070"/><stop offset="100%" stop-color="#1f2330"/></linearGradient>'
+    +'<linearGradient id="skyG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#cfdcec"/><stop offset="100%" stop-color="#8fa6c0"/></linearGradient>'
+    +'<linearGradient id="groundG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#7a7468"/><stop offset="100%" stop-color="#4d4a40"/></linearGradient>'
+    +'<pattern id="concrete" patternUnits="userSpaceOnUse" width="7" height="7"><rect width="7" height="7" fill="#d6d3cd"/><circle cx="1.5" cy="2" r="0.55" fill="#b8b3aa" opacity="0.55"/><circle cx="4.6" cy="4.2" r="0.4" fill="#c2bdb3" opacity="0.6"/><circle cx="2.8" cy="5.6" r="0.3" fill="#a8a299" opacity="0.5"/><circle cx="5.8" cy="1" r="0.25" fill="#aea89e" opacity="0.45"/></pattern>'
+    +'<pattern id="concreteDark" patternUnits="userSpaceOnUse" width="7" height="7"><rect width="7" height="7" fill="#bdbab2"/><circle cx="1.5" cy="2" r="0.55" fill="#9e9990" opacity="0.6"/><circle cx="4.6" cy="4.2" r="0.4" fill="#a8a299" opacity="0.6"/><circle cx="2.8" cy="5.6" r="0.3" fill="#8f8a80" opacity="0.5"/></pattern>'
+    +'<filter id="boardShadow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.6"/><feOffset dx="0.5" dy="2"/><feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<clipPath id="wClip"><rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'"/></clipPath>'
+    +'</defs>';
+
+  if(hasPole){
+    // Outdoor: sky + ground
+    svg+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="url(#skyG)"/>';
+    svg+='<rect x="0" y="'+baseY+'" width="'+VW+'" height="'+(VH-baseY)+'" fill="url(#groundG)"/>';
+    // ground texture lines
+    for(var gi=0;gi<5;gi++){
+      svg+='<line x1="0" y1="'+(baseY+4+gi*7)+'" x2="'+VW+'" y2="'+(baseY+6+gi*7)+'" stroke="#3a382e" stroke-width="0.4" opacity="'+(0.5-gi*0.08)+'"/>';
+    }
+    svg+='<line x1="0" y1="'+baseY+'" x2="'+VW+'" y2="'+baseY+'" stroke="#2e2c25" stroke-width="1"/>';
+
+    var polePxH=s.poleH*sc,poleTopY=baseY-polePxH,polePxW=Math.max(s.poleW*2.54*sc,4);
+    var poleCenters=[];
+    if(s.poleType==='single'){ poleCenters=[scrX+spW/2]; }
+    else if(s.poleType==='double'){ poleCenters=[scrX+spW*0.2, scrX+spW*0.8]; }
+    else { poleCenters=[scrX+spW*0.15, scrX+spW*0.5, scrX+spW*0.85]; }
+
+    // ACP cabinet behind LED
+    var acp=15*sc;
+    svg+='<rect x="'+(scrX-acp)+'" y="'+(scrY-acp)+'" width="'+(spW+acp*2)+'" height="'+(spH+acp*2)+'" rx="2" fill="#9aa0a8" stroke="#5a606a" stroke-width="1" filter="url(#boardShadow)"/>';
+    // bracket arms from poles to cabinet bottom
+    poleCenters.forEach(function(cx){
+      svg+='<rect x="'+(cx-polePxW*0.6)+'" y="'+(scrY+spH+acp-2)+'" width="'+(polePxW*1.2)+'" height="'+Math.max(3,polePxW*0.5)+'" fill="#2a2e3a"/>';
+    });
+
+    poleCenters.forEach(function(cx){
+      svg+=drawRealisticPole(cx, scrY+spH+acp, baseY, polePxW);
+    });
+
+    // pole height label
+    var pdX=scrX-22;
+    svg+='<line x1="'+pdX+'" y1="'+poleTopY+'" x2="'+pdX+'" y2="'+baseY+'" stroke="#f5a623" stroke-width="1" marker-start="url(#vaO2)" marker-end="url(#vaO)"/>';
+    svg+='<rect x="'+(pdX-46)+'" y="'+(poleTopY+polePxH/2-7)+'" width="42" height="14" rx="3" fill="rgba(20,20,20,0.78)"/>';
+    svg+='<text x="'+(pdX-5)+'" y="'+(poleTopY+polePxH/2+3)+'" text-anchor="end" font-size="9.5" fill="#ffca6a" font-family="\'DM Mono\',monospace">'+Math.round(s.poleH)+' cm</text>';
+  } else {
+    // Indoor: concrete environment matching reference image
+    svg+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="url(#concrete)"/>';
+    // Subtle vertical concrete panel seams
+    var seamX1=VW*0.28, seamX2=VW*0.72;
+    svg+='<line x1="'+seamX1+'" y1="0" x2="'+seamX1+'" y2="'+VH+'" stroke="#a8a399" stroke-width="0.6" opacity="0.5"/>';
+    svg+='<line x1="'+seamX2+'" y1="0" x2="'+seamX2+'" y2="'+VH+'" stroke="#a8a399" stroke-width="0.6" opacity="0.5"/>';
+    // Floor line
+    svg+='<rect x="0" y="'+baseY+'" width="'+VW+'" height="'+(VH-baseY)+'" fill="url(#concreteDark)"/>';
+    svg+='<line x1="0" y1="'+baseY+'" x2="'+VW+'" y2="'+baseY+'" stroke="#7a7468" stroke-width="1"/>';
+    // White mounting board (drop shadow + frame)
+    svg+='<rect x="'+(wallX+1.5)+'" y="'+(wallY+2.5)+'" width="'+wpW+'" height="'+wpH+'" fill="#000" opacity="0.18"/>';
+    svg+='<rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'" fill="'+(anyOvf?'#fff5f3':'#fbfbf8')+'" stroke="'+(anyOvf?'#ff5e57':'#9d9a92')+'" stroke-width="'+(anyOvf?2:1)+'"/>';
+    // inner soft border
+    svg+='<rect x="'+(wallX+2)+'" y="'+(wallY+2)+'" width="'+(wpW-4)+'" height="'+(wpH-4)+'" fill="none" stroke="#d8d4cc" stroke-width="0.6"/>';
+  }
+
+  // Screen content (LED grid)
+  var clipAttr=(!hasPole&&!isOutdoor)?'clip-path="url(#wClip)"':'';
+  svg+='<g '+clipAttr+'>';
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="#020611"/>';
+  var showGrid=cpW>3&&cpH>3;
+  for(var row=0;row<s.qH;row++){
+    for(var col=0;col<s.qW;col++){
+      var cx2=scrX+col*cpW,cy2=scrY+row*cpH;
+      var br=0.18+((row+col)%2)*0.05;
+      svg+='<rect x="'+cx2.toFixed(1)+'" y="'+cy2.toFixed(1)+'" width="'+cpW.toFixed(1)+'" height="'+cpH.toFixed(1)+'" fill="rgba(40,90,180,'+br+')" stroke="#1e3a7a" stroke-width="'+(showGrid?0.7:0.25)+'"/>';
+    }
+  }
+  // bright content overlay (suggests live image)
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" fill="rgba(80,160,240,0.18)"/>';
+  svg+='</g>';
+
+  var sBC=anyOvf?'#ff5e57':(hasPole?'#f5a623':'#1d2a52');
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="none" stroke="'+sBC+'" stroke-width="'+(anyOvf?2.5:1.6)+'"/>';
+  svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY+spH/2+4)+'" text-anchor="middle" font-size="'+Math.max(9,Math.min(12,spW/12))+'" font-family="\'DM Mono\',monospace" fill="rgba(255,255,255,0.92)">'+di+'" · '+s.qW+'x'+s.qH+'</text>';
+
+  if(anyOvf){
+    var wW2=Math.min(spW*0.9,200),wH2=36,wX2=scrX+spW/2-wW2/2,wY2=scrY+spH/2-wH2/2;
+    svg+='<rect x="'+wX2+'" y="'+wY2+'" width="'+wW2+'" height="'+wH2+'" rx="5" fill="rgba(255,50,40,0.9)" stroke="#ff5e57" stroke-width="1.2"/>';
+    svg+='<text x="'+(scrX+spW/2)+'" y="'+(wY2+14)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff" font-family="\'DM Sans\',sans-serif">Layar melebihi bidang!</text>';
+    var det=[];
+    if(oW) det.push('Lebar: '+s.scrWcm+' > '+Math.round(s.wallW)+' cm');
+    if(oH) det.push('Tinggi: '+(s.scrHcm+Math.round(s.offY))+' > '+Math.round(s.wallH)+' cm');
+    svg+='<text x="'+(scrX+spW/2)+'" y="'+(wY2+27)+'" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.95)" font-family="\'DM Mono\',monospace">'+det.join(' · ')+'</text>';
+  }
+
+  // Person silhouette image (replaces stick figure)
+  var humanH=Math.max(170*sc,46);
+  var humanW=humanH*0.42;
+  var hx=hasPole?Math.max(wallX+10,scrX-humanW-10):(wallX>humanW+14?wallX-humanW-8:Math.max(6,wallX-humanW+4));
+  svg+='<image href="/images/person.png" x="'+hx+'" y="'+(baseY-humanH)+'" width="'+humanW+'" height="'+humanH+'" preserveAspectRatio="xMidYMax meet" opacity="'+(hasPole?0.92:0.85)+'"/>';
+  svg+='<text x="'+(hx+humanW/2)+'" y="'+(baseY+13)+'" text-anchor="middle" font-size="9.5" fill="'+(hasPole?'#1a1a1a':'#3a3a3a')+'" font-family="\'DM Sans\',sans-serif">170 cm</text>';
+
+  // Helper for chip-style dimension labels (matches reference image)
+  function chip(x,y,txt,col){
+    col=col||'#3a3a3a';
+    var pad=4, fs=9.5, w=txt.length*5.4+pad*2, h=14;
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="2" fill="'+col+'"/>'
+      +'<text x="'+x+'" y="'+(y+3)+'" text-anchor="middle" font-size="'+fs+'" fill="#fff" font-family="\'DM Sans\',sans-serif" font-weight="500">'+txt+'</text>';
+  }
+
+  function fmtM(cm){ var m=cm/100; return (m>=10?Math.round(m):m.toFixed(m<1?2:1).replace(/\.0$/,''))+' m'; }
+
+  if(!hasPole){
+    // Indoor: dimension chips on margins (top, sides, bottom) + screen W/H
+    var mTop=Math.max(0,Math.round(s.wallH-s.scrHcm-s.offY));
+    var mSide=Math.max(0,Math.round((s.wallW-s.scrWcm)/2));
+    var mBot=Math.max(0,Math.round(s.offY));
+    // Top: left margin chip, screen-W chip, right margin chip — all on a single dotted alignment line
+    var topChipY=wallY-12;
+    // dotted guide lines from screen corners up to chip line
+    svg+='<line x1="'+scrX+'" y1="'+scrY+'" x2="'+scrX+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+(scrX+spW)+'" y1="'+scrY+'" x2="'+(scrX+spW)+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+wallY+'" x2="'+wallX+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+(wallX+wpW)+'" y1="'+wallY+'" x2="'+(wallX+wpW)+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    if(scrX-wallX>22) svg+=chip((wallX+scrX)/2, topChipY, fmtM(mSide));
+    svg+=chip(scrX+spW/2, topChipY, fmtM(s.scrWcm));
+    if((wallX+wpW)-(scrX+spW)>22) svg+=chip((scrX+spW+wallX+wpW)/2, topChipY, fmtM(mSide));
+
+    // Left side: top margin chip, screen height chip, bottom margin chip
+    var leftChipX=wallX-22;
+    svg+='<line x1="'+wallX+'" y1="'+wallY+'" x2="'+leftChipX+'" y2="'+wallY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+scrY+'" x2="'+leftChipX+'" y2="'+scrY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+(scrY+spH)+'" x2="'+leftChipX+'" y2="'+(scrY+spH)+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+baseY+'" x2="'+leftChipX+'" y2="'+baseY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    if(scrY-wallY>16) svg+=chip(leftChipX, (wallY+scrY)/2, fmtM(mTop));
+    svg+=chip(leftChipX, scrY+spH/2, fmtM(s.scrHcm));
+    if(baseY-(scrY+spH)>16) svg+=chip(leftChipX, (scrY+spH+baseY)/2, fmtM(mBot));
+  } else {
+    // Outdoor: total wall (sky area) width/height chips
+    var dtY=wallY-14;
+    svg+='<line x1="'+wallX+'" y1="'+dtY+'" x2="'+(wallX+wpW)+'" y2="'+dtY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
+    svg+='<text x="'+(wallX+wpW/2)+'" y="'+(dtY-4)+'" text-anchor="middle" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewW)+' cm</text>';
+    var drX=wallX+wpW+14;
+    svg+='<line x1="'+drX+'" y1="'+wallY+'" x2="'+drX+'" y2="'+baseY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
+    svg+='<text x="'+(drX+4)+'" y="'+(wallY+wpH/2+4)+'" text-anchor="start" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewH)+' cm</text>';
+    // Screen W/H labels
+    if(spW>40){
+      svg+='<line x1="'+scrX+'" y1="'+(scrY-10)+'" x2="'+(scrX+spW)+'" y2="'+(scrY-10)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
+      svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY-13)+'" text-anchor="middle" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrWcm+' cm</text>';
+    }
+    if(spH>30){
+      var sdrX=scrX+spW+10;
+      svg+='<line x1="'+sdrX+'" y1="'+scrY+'" x2="'+sdrX+'" y2="'+(scrY+spH)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
+      svg+='<text x="'+(sdrX+3)+'" y="'+(scrY+spH/2+4)+'" text-anchor="start" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrHcm+' cm</text>';
+    }
+  }
+
+  // Optimal viewing distance label
+  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+22)+'" text-anchor="end" font-size="9.5" fill="'+(hasPole?'#1a1a1a':'#2c3242')+'" font-family="\'DM Mono\',monospace" font-weight="600">'+optV.toFixed(1)+' m</text>';
+  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+33)+'" text-anchor="end" font-size="9" fill="#5a5a5a" font-family="\'DM Sans\',sans-serif">jarak optimal</text>';
+
+  document.getElementById('viz-stage').innerHTML=svg;
+
+  var warnDiv=document.getElementById('viz-overflow-warn');
+  if(warnDiv){
+    if(anyOvf){
+      var msgs=[];
+      if(oW) msgs.push('Lebar layar <b>'+s.scrWcm+' cm</b> melebihi bidang <b>'+Math.round(s.wallW)+' cm</b>');
+      if(oH) msgs.push('Tinggi layar+posisi <b>'+(s.scrHcm+Math.round(s.offY))+' cm</b> melebihi bidang <b>'+Math.round(s.wallH)+' cm</b>');
+      warnDiv.style.display='';
+      warnDiv.innerHTML='<span style="font-weight:700;font-size:13px">Bidang pemasangan terlalu kecil</span><br><span style="font-size:12px;line-height:1.7">'+msgs.join('<br>')+'</span>';
+    } else {warnDiv.style.display='none';warnDiv.innerHTML='';}
+  }
+
+  var arW2=rW/s.g||rW,arH2=rH/s.g||rH;
+  var g2=vizGcd(Math.round(arW2),Math.round(arH2));
+  var chips='<span class="viz-res-chip">Diagonal: <b>'+di+'"</b></span><span class="viz-res-chip">Grid: <b>'+s.qW+'x'+s.qH+'</b></span><span class="viz-res-chip">Layar: <b>'+s.scrWcm+'x'+s.scrHcm+' cm</b></span><span class="viz-res-chip">AR: <b>'+Math.round(arW2/g2)+':'+Math.round(arH2/g2)+'</b></span><span class="viz-res-chip">Jarak: <b>'+optV.toFixed(1)+' m</b></span><span class="viz-res-chip">Lantai: <b>'+Math.round(s.offY)+' cm</b></span>';
+  if(hasPole){var acp3=15;chips+='<span class="viz-res-chip" style="color:var(--warn)">Tiang: '+s.poleType+' · D'+Math.round(s.poleW)+'"</span><span class="viz-res-chip" style="color:#00d4aa">ACP: '+(s.scrWcm+acp3*2)+'x'+(s.scrHcm+acp3*2)+' cm</span>';}
+  if(anyOvf) chips+='<span class="viz-res-chip" style="color:#ff5e57;font-weight:600">Bidang terlalu kecil</span>';
+  document.getElementById('viz-res-info').innerHTML=chips;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function(){
+  var d=new Date();
+  document.getElementById('quo-date').value=d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  filterProducts();
+})();
+</script>
+</body>
+</html>
