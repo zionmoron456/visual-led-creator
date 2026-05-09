@@ -100,7 +100,7 @@ select option{background:var(--surface2)}
 .addon-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .vp-rec-panel{background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
 .vp-rec-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-@media(max-width:900px){.layout{display:flex;flex-direction:column;align-items:stretch}.layout>div{display:contents}.export-card,.card{width:100%;box-sizing:border-box}.export-card{order:99}.container{padding:16px}.header{padding:14px 16px}.export-grid{grid-template-columns:1fr}.export-btn-row{grid-template-columns:1fr}}
+@media(max-width:900px){.layout{display:flex;flex-direction:column;align-items:stretch}.layout>div{display:contents}.export-card,.card{width:100%;box-sizing:border-box}.export-card{order:99}.container{padding:16px}.header{padding:14px 16px}.export-grid{grid-template-columns:1fr}.export-btn-row{grid-template-columns:1fr}.viz-controls-row{justify-content:center !important}.viz-controls-row>div{align-items:center}}
 </style>
 </head>
 <body>
@@ -154,7 +154,7 @@ select option{background:var(--surface2)}
     <div class="card-header"><div class="card-icon teal">◈</div><span class="card-title">Visualisasi Layar</span></div>
     <div class="screen-preview">
       <div class="viz-svg-wrap"><svg id="viz-stage" viewBox="0 0 580 320" xmlns="http://www.w3.org/2000/svg" style="height:320px"></svg></div>
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <div class="viz-controls-row" style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
           <div class="viz-section-label" style="width:100%;text-align:center">Ukuran Bidang Pemasangan</div>
           <div style="display:flex;gap:8px;align-items:flex-end">
