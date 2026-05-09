@@ -1032,10 +1032,10 @@ async function exportDatasheetPDF(){
         doc.rect(cx,cy,cabW,cabH,'S');
         if(cabW>=10 && cabH>=10){
           doc.setFont('helvetica','normal');doc.setFontSize(3.6);doc.setTextColor(70,70,70);
-          doc.text('H_16xRJ45+2xfiber sending card-'+(card+1), cx+0.4, cy+1.6);
-          doc.text('W: '+p.cW, cx+0.4, cy+3.6);
-          doc.text('H: '+p.cH, cx+0.4, cy+5.6);
-          doc.text('1W1H', cx+0.4, cy+7.6);
+          doc.text(cardLabel+' #'+(card+1), cx+0.4, cy+1.6);
+          doc.text('W: '+p.pxW+' px', cx+0.4, cy+3.6);
+          doc.text('H: '+p.pxH+' px', cx+0.4, cy+5.6);
+          doc.text(p.pxW+'x'+p.pxH, cx+0.4, cy+7.6);
         }
       }
     }
