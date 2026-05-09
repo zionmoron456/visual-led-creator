@@ -977,7 +977,122 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
   doc.text('Tanggal: '+quoDate,PW-MR-4,y+10,{align:'right'});
   doc.text('Datasheet MAXHUB '+p.model,PW-MR-4,y+15,{align:'right'});
-  drawFooter(4,4);
+  drawFooter(4,5);
+
+  // ── PAGE 5: Data Flow Drawing ──────────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Data Flow Drawing');
+  y=MT+4;
+  doc.setFillColor(0,60,140);doc.rect(ML,y,CW,10,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text('Sending Card & Cabinet Data Flow Diagram',ML+4,y+6.8);
+  y+=14;
+
+  // ── NovaStar logic ────────────────────────────────────────────────────────
+  // Each Gigabit Ethernet port carries up to ~650,000 pixels
+  // Sending card "H_16xRJ45+2xFiber" = up to 16 RJ45 ports per card
+  // Cabinets are routed in column-based serpentine pattern (down → up → down)
+  var cabPxCount = p.pxW * p.pxH;
+  var pxPerPort = 650000;
+  var cabPerPort = Math.max(1, Math.floor(pxPerPort/cabPxCount));
+  var portsPerCard = 16;
+  var cabPerCard = cabPerPort * portsPerCard;
+  var totalCab = c.qW * c.qH;
+  var nCards = Math.max(1, Math.ceil(totalCab/cabPerCard));
+  if(nCards>4) nCards=4;
+  var colsPerCard = Math.ceil(c.qW/nCards);
+
+  // ── Layout grid ──────────────────────────────────────────────────────────
+  var gX=ML, gY=y;
+  var gW=CW;
+  var cabW=gW/c.qW;
+  var cabH=Math.min(220/c.qH, cabW*0.62, 22);
+  if(cabH<6) cabH=6;
+  var gH=cabH*c.qH;
+
+  var bgCols=[[252,210,210],[210,240,215],[210,225,250],[245,225,205]];
+  var dkCols=[[210,40,40],[20,150,80],[40,90,210],[210,140,40]];
+
+  for(var card=0; card<nCards; card++){
+    var sCol=card*colsPerCard;
+    var eCol=Math.min(c.qW, sCol+colsPerCard);
+    var nCol=eCol-sCol;
+    var bg=bgCols[card%4], dk=dkCols[card%4];
+
+    // Card region background
+    doc.setFillColor(bg[0],bg[1],bg[2]);
+    doc.rect(gX+sCol*cabW, gY, nCol*cabW, gH, 'F');
+
+    // Cabinet cells with labels
+    for(var ci=sCol; ci<eCol; ci++){
+      for(var ri=0; ri<c.qH; ri++){
+        var cx=gX+ci*cabW, cy=gY+ri*cabH;
+        doc.setDrawColor(170,170,170);doc.setLineWidth(0.1);
+        doc.rect(cx,cy,cabW,cabH,'S');
+        if(cabW>=10 && cabH>=10){
+          doc.setFont('helvetica','normal');doc.setFontSize(3.6);doc.setTextColor(70,70,70);
+          doc.text('H_16xRJ45+2xfiber sending card-'+(card+1), cx+0.4, cy+1.6);
+          doc.text('W: '+p.cW, cx+0.4, cy+3.6);
+          doc.text('H: '+p.cH, cx+0.4, cy+5.6);
+          doc.text('1W1H', cx+0.4, cy+7.6);
+        }
+      }
+    }
+
+    // Build column-serpentine sequence within this card
+    var seq=[];
+    for(var cc=0; cc<nCol; cc++){
+      var actCol=sCol+cc;
+      if(cc%2===0){ for(var rr=0; rr<c.qH; rr++) seq.push([actCol,rr]); }
+      else { for(var rr=c.qH-1; rr>=0; rr--) seq.push([actCol,rr]); }
+    }
+
+    // Draw connecting arrows + port markers
+    doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.4);
+    for(var i=0;i<seq.length;i++){
+      var cur=seq[i];
+      var portNum=Math.floor(i/cabPerPort)+1;
+      var cx=gX+cur[0]*cabW+cabW/2;
+      var cy=gY+cur[1]*cabH+cabH/2;
+      if(i%cabPerPort===0){
+        // Port start marker
+        var r=Math.min(2.2, cabW/4, cabH/4);
+        doc.setFillColor(dk[0],dk[1],dk[2]);
+        doc.circle(cx, cy, r, 'F');
+        if(r>=1.6){
+          doc.setFont('helvetica','bold');doc.setFontSize(r*2.2);doc.setTextColor(255,255,255);
+          doc.text((card+1)+'-'+portNum, cx, cy+r*0.45, {align:'center'});
+          doc.setDrawColor(dk[0],dk[1],dk[2]);
+        }
+      } else {
+        var prev=seq[i-1];
+        var x1=gX+prev[0]*cabW+cabW/2, y1=gY+prev[1]*cabH+cabH/2;
+        doc.line(x1,y1,cx,cy);
+      }
+    }
+  }
+  y=gY+gH+6;
+
+  // ── Configuration summary ────────────────────────────────────────────────
+  y=subHdr(y,'Sending Card Configuration');
+  var altr=false;
+  var dfRows=[
+    ['Sending Card Model','H_16xRJ45 + 2xFiber'],
+    ['Total Sending Cards',nCards+' Unit'],
+    ['Ports per Card (RJ45)','16 (Gigabit Ethernet)'],
+    ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
+    ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
+    ['Cabinets per Port (max)',cabPerPort+' cabinet'],
+    ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
+    ['Routing Pattern','Column-based Serpentine (S-flow)']
+  ];
+  dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
+
+  y+=4;
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Note: Cable routing follows NovaStar serpentine logic — each color = 1 sending card, each numbered marker = port output.',ML,y);
+
+  drawFooter(5,5);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
