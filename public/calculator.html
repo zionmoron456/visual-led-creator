@@ -989,13 +989,14 @@ async function exportDatasheetPDF(){
   y+=14;
 
   // ── NovaStar logic ────────────────────────────────────────────────────────
-  // Each Gigabit Ethernet port carries up to ~650,000 pixels
-  // Sending card "H_16xRJ45+2xFiber" = up to 16 RJ45 ports per card
+  // Each Gigabit Ethernet port carries up to ~650,000 pixels (cabinet RESOLUTION based)
+  // Sending card uses processor's actual RJ45 port count
   // Cabinets are routed in column-based serpentine pattern (down → up → down)
-  var cabPxCount = p.pxW * p.pxH;
-  var pxPerPort = 650000;
+  var cabPxCount = p.pxW * p.pxH;                     // px per cabinet (resolution)
+  var pxPerPort = 650000;                             // Gigabit RJ45 limit
   var cabPerPort = Math.max(1, Math.floor(pxPerPort/cabPxCount));
-  var portsPerCard = 16;
+  var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
+  var cardLabel = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
   var cabPerCard = cabPerPort * portsPerCard;
   var totalCab = c.qW * c.qH;
   var nCards = Math.max(1, Math.ceil(totalCab/cabPerCard));
@@ -1031,10 +1032,10 @@ async function exportDatasheetPDF(){
         doc.rect(cx,cy,cabW,cabH,'S');
         if(cabW>=10 && cabH>=10){
           doc.setFont('helvetica','normal');doc.setFontSize(3.6);doc.setTextColor(70,70,70);
-          doc.text('H_16xRJ45+2xfiber sending card-'+(card+1), cx+0.4, cy+1.6);
-          doc.text('W: '+p.cW, cx+0.4, cy+3.6);
-          doc.text('H: '+p.cH, cx+0.4, cy+5.6);
-          doc.text('1W1H', cx+0.4, cy+7.6);
+          doc.text(cardLabel+' #'+(card+1), cx+0.4, cy+1.6);
+          doc.text('W: '+p.pxW+' px', cx+0.4, cy+3.6);
+          doc.text('H: '+p.pxH+' px', cx+0.4, cy+5.6);
+          doc.text(p.pxW+'x'+p.pxH, cx+0.4, cy+7.6);
         }
       }
     }
@@ -1077,13 +1078,15 @@ async function exportDatasheetPDF(){
   y=subHdr(y,'Sending Card Configuration');
   var altr=false;
   var dfRows=[
-    ['Sending Card Model','H_16xRJ45 + 2xFiber'],
+    ['Sending Card / Processor',cardLabel],
     ['Total Sending Cards',nCards+' Unit'],
-    ['Ports per Card (RJ45)','16 (Gigabit Ethernet)'],
+    ['Ports per Card (RJ45)',portsPerCard+' (Gigabit Ethernet)'],
     ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
     ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
     ['Cabinets per Port (max)',cabPerPort+' cabinet'],
+    ['Ports Used',Math.ceil(totalCab/cabPerPort)+' / '+(nCards*portsPerCard)],
     ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
+    ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
     ['Routing Pattern','Column-based Serpentine (S-flow)']
   ];
   dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
