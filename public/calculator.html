@@ -100,7 +100,7 @@ select option{background:var(--surface2)}
 .addon-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .vp-rec-panel{background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
 .vp-rec-title{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.container{padding:16px}.header{padding:14px 16px}.export-grid{grid-template-columns:1fr}.export-btn-row{grid-template-columns:1fr}}
+@media(max-width:900px){.layout{display:flex;flex-direction:column}.layout>div{display:contents}.export-card{order:99}.container{padding:16px}.header{padding:14px 16px}.export-grid{grid-template-columns:1fr}.export-btn-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
