@@ -1031,6 +1031,32 @@ function vizSyncFromCalc(sWm,sHm,diagInch,areaSqm,resW,resH,g){
 
 function vizGcd(a,b){return b<1?a:vizGcd(b,a%b);}
 
+function drawRealisticPole(cx, topY, baseY, w){
+  var tw=w*0.88, bw=w;
+  var path='M'+(cx-tw/2)+','+topY+' L'+(cx+tw/2)+','+topY+' L'+(cx+bw/2)+','+baseY+' L'+(cx-bw/2)+','+baseY+' Z';
+  var s='<path d="'+path+'" fill="url(#poleSteel)" stroke="#1c1f29" stroke-width="0.6"/>';
+  // highlight stripe
+  s+='<path d="M'+(cx-tw*0.18)+','+topY+' L'+(cx-tw*0.05)+','+topY+' L'+(cx-bw*0.05)+','+baseY+' L'+(cx-bw*0.18)+','+baseY+' Z" fill="#d8dde8" opacity="0.45"/>';
+  // top cap / bracket plate
+  var capH=Math.max(3,w*0.45);
+  s+='<rect x="'+(cx-tw/2-3)+'" y="'+(topY-capH)+'" width="'+(tw+6)+'" height="'+capH+'" fill="#23262f" rx="1"/>';
+  s+='<rect x="'+(cx-tw/2-3)+'" y="'+(topY-capH)+'" width="'+(tw+6)+'" height="1.2" fill="#5a6070"/>';
+  // base flange
+  var fW=Math.max(w*2.6,8), fH=Math.max(4,w*0.7);
+  s+='<rect x="'+(cx-fW/2)+'" y="'+(baseY-fH)+'" width="'+fW+'" height="'+fH+'" fill="#2a2e3a" stroke="#11131a" stroke-width="0.5" rx="1"/>';
+  s+='<rect x="'+(cx-fW/2-1.5)+'" y="'+(baseY-1.5)+'" width="'+(fW+3)+'" height="2" fill="#16181f"/>';
+  // bolts
+  var nBolts=4, br=Math.max(0.9,w*0.09);
+  for(var i=0;i<nBolts;i++){
+    var bx=cx-fW/2+fW*(0.12+i*(0.76/(nBolts-1)));
+    s+='<circle cx="'+bx+'" cy="'+(baseY-fH*0.55)+'" r="'+br+'" fill="#0a0c12"/>';
+    s+='<circle cx="'+(bx-br*0.25)+'" cy="'+(baseY-fH*0.55-br*0.25)+'" r="'+(br*0.35)+'" fill="#7a808e" opacity="0.7"/>';
+  }
+  // ground shadow
+  s+='<ellipse cx="'+cx+'" cy="'+(baseY+1.5)+'" rx="'+(fW*0.65)+'" ry="2.2" fill="#000" opacity="0.32"/>';
+  return s;
+}
+
 function vizRenderGrid(){
   var s=vizState;
   var isOutdoor=(lastCalc&&lastCalc.p)?lastCalc.p.env==='Outdoor':document.getElementById('env').value==='Outdoor';
@@ -1045,7 +1071,7 @@ function vizRenderGrid(){
   if(pwEl&&document.activeElement!==pwEl) pwEl.value=Math.round(s.poleW);
   if(qWEl) qWEl.textContent=s.qW;if(qHEl) qHEl.textContent=s.qH;
 
-  var VW=580,VH=320,mL=62,mR=50,mT=36,mB=56;
+  var VW=580,VH=320,mL=70,mR=58,mT=44,mB=60;
   var dW=VW-mL-mR,dH=VH-mT-mB;
   var ewH=hasPole?s.poleH+s.scrHcm+100:s.wallH;
   var ewW=hasPole?s.scrWcm+630:s.wallW;
@@ -1060,90 +1086,168 @@ function vizRenderGrid(){
   var optV=Math.round(pitchMm*3000/1000*10)/10;
   var di=s.diagInch||Math.round(Math.sqrt((s.scrWcm/100)*(s.scrWcm/100)+(s.scrHcm/100)*(s.scrHcm/100))*39.3701);
   var rW=s.resW||s.qW*120,rH=s.resH||s.qH*120;
-  var humanH=Math.max(170*sc,38);
-  var hx=hasPole?Math.max(wallX+20,scrX-humanH*0.6):(wallX>36?wallX-22:22);
-  var hy=baseY-humanH,hhr=Math.max(humanH*0.07,3.5),neckY=hy+hhr*2;
-  var sw=Math.max(humanH*0.11,5),hw=Math.max(humanH*0.08,3.5);
-  var shoulderY=neckY+humanH*0.055,hipY=shoulderY+humanH*0.38,kneeY=hipY+humanH*0.3;
-  var stW=Math.max(humanH*0.048,1.5);
 
-  var svg='<defs><marker id="va" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#4f8aff" stroke-width="1.2"/></marker><marker id="va2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#4f8aff" stroke-width="1.2"/></marker><marker id="vag" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker><marker id="vag2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker><marker id="vaO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker><marker id="vaO2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker><linearGradient id="pG" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#3a3f52"/><stop offset="45%" style="stop-color:#7a8090"/><stop offset="100%" style="stop-color:#3a3f52"/></linearGradient><linearGradient id="skyG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#0d1b2e"/><stop offset="100%" style="stop-color:#1a2d44"/></linearGradient><clipPath id="wClip"><rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'"/></clipPath></defs>';
+  var svg='<defs>'
+    +'<marker id="va" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#4a5060" stroke-width="1.2"/></marker>'
+    +'<marker id="va2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#4a5060" stroke-width="1.2"/></marker>'
+    +'<marker id="vag" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker>'
+    +'<marker id="vag2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#00d4aa" stroke-width="1.2"/></marker>'
+    +'<marker id="vaO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker>'
+    +'<marker id="vaO2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#f5a623" stroke-width="1.2"/></marker>'
+    +'<linearGradient id="poleSteel" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f2330"/><stop offset="22%" stop-color="#5a6070"/><stop offset="48%" stop-color="#a8aebc"/><stop offset="78%" stop-color="#5a6070"/><stop offset="100%" stop-color="#1f2330"/></linearGradient>'
+    +'<linearGradient id="skyG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#cfdcec"/><stop offset="100%" stop-color="#8fa6c0"/></linearGradient>'
+    +'<linearGradient id="groundG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#7a7468"/><stop offset="100%" stop-color="#4d4a40"/></linearGradient>'
+    +'<pattern id="concrete" patternUnits="userSpaceOnUse" width="7" height="7"><rect width="7" height="7" fill="#d6d3cd"/><circle cx="1.5" cy="2" r="0.55" fill="#b8b3aa" opacity="0.55"/><circle cx="4.6" cy="4.2" r="0.4" fill="#c2bdb3" opacity="0.6"/><circle cx="2.8" cy="5.6" r="0.3" fill="#a8a299" opacity="0.5"/><circle cx="5.8" cy="1" r="0.25" fill="#aea89e" opacity="0.45"/></pattern>'
+    +'<pattern id="concreteDark" patternUnits="userSpaceOnUse" width="7" height="7"><rect width="7" height="7" fill="#bdbab2"/><circle cx="1.5" cy="2" r="0.55" fill="#9e9990" opacity="0.6"/><circle cx="4.6" cy="4.2" r="0.4" fill="#a8a299" opacity="0.6"/><circle cx="2.8" cy="5.6" r="0.3" fill="#8f8a80" opacity="0.5"/></pattern>'
+    +'<filter id="boardShadow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.6"/><feOffset dx="0.5" dy="2"/><feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<clipPath id="wClip"><rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'"/></clipPath>'
+    +'</defs>';
 
   if(hasPole){
-    svg+='<rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'" rx="3" fill="url(#skyG)" stroke="#1e2a3a" stroke-width="1.5" stroke-dasharray="5 4"/>';
-    var gH=Math.max(12,28*sc);
-    svg+='<rect x="'+wallX+'" y="'+(baseY-gH)+'" width="'+wpW+'" height="'+gH+'" fill="#2a3018" opacity="0.85"/>';
-    svg+='<line x1="'+(wallX-20)+'" y1="'+baseY+'" x2="'+(wallX+wpW+20)+'" y2="'+baseY+'" stroke="#3a4020" stroke-width="1.5"/>';
-    var polePxH=s.poleH*sc,poleTopY=baseY-polePxH,polePxW=Math.max(s.poleW*2.54*sc,4);
-    if(s.poleType==='single'){
-      var poleCX=scrX+spW/2;
-      svg+='<rect x="'+(poleCX-polePxW/2)+'" y="'+poleTopY+'" width="'+polePxW+'" height="'+polePxH+'" fill="url(#pG)" rx="'+(polePxW*0.3)+'"/>';
-      var bpW=polePxW*2.8,bpH=Math.max(5,polePxW*0.6);
-      svg+='<rect x="'+(poleCX-bpW/2)+'" y="'+(baseY-bpH)+'" width="'+bpW+'" height="'+bpH+'" fill="#3a3f52" rx="2"/>';
-      var pdX=scrX-22;
-      svg+='<line x1="'+pdX+'" y1="'+poleTopY+'" x2="'+pdX+'" y2="'+baseY+'" stroke="#f5a623" stroke-width="1" marker-start="url(#vaO2)" marker-end="url(#vaO)"/>';
-      svg+='<text x="'+(pdX-5)+'" y="'+(poleTopY+polePxH/2+4)+'" text-anchor="end" font-size="9.5" fill="#f5a623" font-family="\'DM Mono\',monospace">'+Math.round(s.poleH)+' cm</text>';
-    } else if(s.poleType==='double'){
-      var p1X=scrX+spW*0.2,p2X=scrX+spW*0.8;
-      [p1X,p2X].forEach(function(cx){svg+='<rect x="'+(cx-polePxW/2)+'" y="'+poleTopY+'" width="'+polePxW+'" height="'+polePxH+'" fill="url(#pG)" rx="'+(polePxW*0.3)+'"/><rect x="'+(cx-polePxW*1.2)+'" y="'+(baseY-polePxW*0.6)+'" width="'+(polePxW*2.4)+'" height="'+(polePxW*0.6)+'" fill="#3a3f52" rx="2"/>';});
-      var pdX2=scrX-22;
-      svg+='<line x1="'+pdX2+'" y1="'+poleTopY+'" x2="'+pdX2+'" y2="'+baseY+'" stroke="#f5a623" stroke-width="1" marker-start="url(#vaO2)" marker-end="url(#vaO)"/>';
-      svg+='<text x="'+(pdX2-5)+'" y="'+(poleTopY+polePxH/2+4)+'" text-anchor="end" font-size="9.5" fill="#f5a623" font-family="\'DM Mono\',monospace">'+Math.round(s.poleH)+' cm</text>';
-    } else {
-      var p1X2=scrX+spW*0.15,p2X2=scrX+spW*0.5,p3X2=scrX+spW*0.85;
-      [p1X2,p2X2,p3X2].forEach(function(cx){svg+='<rect x="'+(cx-polePxW/2)+'" y="'+poleTopY+'" width="'+polePxW+'" height="'+polePxH+'" fill="url(#pG)" rx="'+(polePxW*0.3)+'"/><rect x="'+(cx-polePxW*1.2)+'" y="'+(baseY-polePxW*0.6)+'" width="'+(polePxW*2.4)+'" height="'+(polePxW*0.6)+'" fill="#3a3f52" rx="2"/>';});
-      var pdX3=scrX-22;
-      svg+='<line x1="'+pdX3+'" y1="'+poleTopY+'" x2="'+pdX3+'" y2="'+baseY+'" stroke="#f5a623" stroke-width="1" marker-start="url(#vaO2)" marker-end="url(#vaO)"/>';
-      svg+='<text x="'+(pdX3-5)+'" y="'+(poleTopY+polePxH/2+4)+'" text-anchor="end" font-size="9.5" fill="#f5a623" font-family="\'DM Mono\',monospace">'+Math.round(s.poleH)+' cm</text>';
+    // Outdoor: sky + ground
+    svg+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="url(#skyG)"/>';
+    svg+='<rect x="0" y="'+baseY+'" width="'+VW+'" height="'+(VH-baseY)+'" fill="url(#groundG)"/>';
+    // ground texture lines
+    for(var gi=0;gi<5;gi++){
+      svg+='<line x1="0" y1="'+(baseY+4+gi*7)+'" x2="'+VW+'" y2="'+(baseY+6+gi*7)+'" stroke="#3a382e" stroke-width="0.4" opacity="'+(0.5-gi*0.08)+'"/>';
     }
-    if(isOutdoor){var acp=15*sc;svg+='<rect x="'+(scrX-acp)+'" y="'+(scrY-acp)+'" width="'+(spW+acp*2)+'" height="'+(spH+acp*2)+'" rx="2" fill="#8a9099" stroke="#6a7080" stroke-width="1"/>';}
+    svg+='<line x1="0" y1="'+baseY+'" x2="'+VW+'" y2="'+baseY+'" stroke="#2e2c25" stroke-width="1"/>';
+
+    var polePxH=s.poleH*sc,poleTopY=baseY-polePxH,polePxW=Math.max(s.poleW*2.54*sc,4);
+    var poleCenters=[];
+    if(s.poleType==='single'){ poleCenters=[scrX+spW/2]; }
+    else if(s.poleType==='double'){ poleCenters=[scrX+spW*0.2, scrX+spW*0.8]; }
+    else { poleCenters=[scrX+spW*0.15, scrX+spW*0.5, scrX+spW*0.85]; }
+
+    // ACP cabinet behind LED
+    var acp=15*sc;
+    svg+='<rect x="'+(scrX-acp)+'" y="'+(scrY-acp)+'" width="'+(spW+acp*2)+'" height="'+(spH+acp*2)+'" rx="2" fill="#9aa0a8" stroke="#5a606a" stroke-width="1" filter="url(#boardShadow)"/>';
+    // bracket arms from poles to cabinet bottom
+    poleCenters.forEach(function(cx){
+      svg+='<rect x="'+(cx-polePxW*0.6)+'" y="'+(scrY+spH+acp-2)+'" width="'+(polePxW*1.2)+'" height="'+Math.max(3,polePxW*0.5)+'" fill="#2a2e3a"/>';
+    });
+
+    poleCenters.forEach(function(cx){
+      svg+=drawRealisticPole(cx, scrY+spH+acp, baseY, polePxW);
+    });
+
+    // pole height label
+    var pdX=scrX-22;
+    svg+='<line x1="'+pdX+'" y1="'+poleTopY+'" x2="'+pdX+'" y2="'+baseY+'" stroke="#f5a623" stroke-width="1" marker-start="url(#vaO2)" marker-end="url(#vaO)"/>';
+    svg+='<rect x="'+(pdX-46)+'" y="'+(poleTopY+polePxH/2-7)+'" width="42" height="14" rx="3" fill="rgba(20,20,20,0.78)"/>';
+    svg+='<text x="'+(pdX-5)+'" y="'+(poleTopY+polePxH/2+3)+'" text-anchor="end" font-size="9.5" fill="#ffca6a" font-family="\'DM Mono\',monospace">'+Math.round(s.poleH)+' cm</text>';
   } else {
-    svg+='<rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'" rx="2" fill="'+(anyOvf?'rgba(255,50,40,0.05)':'#1a1d27')+'" stroke="'+(anyOvf?'#ff5e57':'#4a4f6a')+'" stroke-width="'+(anyOvf?2:1.5)+'" stroke-dasharray="5 4"/>';
-    svg+='<line x1="'+(wallX-20)+'" y1="'+baseY+'" x2="'+(wallX+wpW+20)+'" y2="'+baseY+'" stroke="#4a4f6a" stroke-width="1" opacity="0.5"/>';
-    if(isOutdoor){var acp2=15*sc;svg+='<rect x="'+(scrX-acp2)+'" y="'+(scrY-acp2)+'" width="'+(spW+acp2*2)+'" height="'+(spH+acp2*2)+'" rx="2" fill="#8a9099" stroke="#6a7080" stroke-width="1"/>';}
+    // Indoor: concrete environment matching reference image
+    svg+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="url(#concrete)"/>';
+    // Subtle vertical concrete panel seams
+    var seamX1=VW*0.28, seamX2=VW*0.72;
+    svg+='<line x1="'+seamX1+'" y1="0" x2="'+seamX1+'" y2="'+VH+'" stroke="#a8a399" stroke-width="0.6" opacity="0.5"/>';
+    svg+='<line x1="'+seamX2+'" y1="0" x2="'+seamX2+'" y2="'+VH+'" stroke="#a8a399" stroke-width="0.6" opacity="0.5"/>';
+    // Floor line
+    svg+='<rect x="0" y="'+baseY+'" width="'+VW+'" height="'+(VH-baseY)+'" fill="url(#concreteDark)"/>';
+    svg+='<line x1="0" y1="'+baseY+'" x2="'+VW+'" y2="'+baseY+'" stroke="#7a7468" stroke-width="1"/>';
+    // White mounting board (drop shadow + frame)
+    svg+='<rect x="'+(wallX+1.5)+'" y="'+(wallY+2.5)+'" width="'+wpW+'" height="'+wpH+'" fill="#000" opacity="0.18"/>';
+    svg+='<rect x="'+wallX+'" y="'+wallY+'" width="'+wpW+'" height="'+wpH+'" fill="'+(anyOvf?'#fff5f3':'#fbfbf8')+'" stroke="'+(anyOvf?'#ff5e57':'#9d9a92')+'" stroke-width="'+(anyOvf?2:1)+'"/>';
+    // inner soft border
+    svg+='<rect x="'+(wallX+2)+'" y="'+(wallY+2)+'" width="'+(wpW-4)+'" height="'+(wpH-4)+'" fill="none" stroke="#d8d4cc" stroke-width="0.6"/>';
   }
 
+  // Screen content (LED grid)
   var clipAttr=(!hasPole&&!isOutdoor)?'clip-path="url(#wClip)"':'';
   svg+='<g '+clipAttr+'>';
-  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="#050e1f"/>';
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="#020611"/>';
   var showGrid=cpW>3&&cpH>3;
   for(var row=0;row<s.qH;row++){
     for(var col=0;col<s.qW;col++){
-      var cx=scrX+col*cpW,cy=scrY+row*cpH;
-      var br=0.12+((row+col)%2)*0.03;
-      svg+='<rect x="'+cx.toFixed(1)+'" y="'+cy.toFixed(1)+'" width="'+cpW.toFixed(1)+'" height="'+cpH.toFixed(1)+'" fill="rgba(30,60,120,'+br+')" stroke="#1e3a7a" stroke-width="'+(showGrid?0.8:0.3)+'"/>';
+      var cx2=scrX+col*cpW,cy2=scrY+row*cpH;
+      var br=0.18+((row+col)%2)*0.05;
+      svg+='<rect x="'+cx2.toFixed(1)+'" y="'+cy2.toFixed(1)+'" width="'+cpW.toFixed(1)+'" height="'+cpH.toFixed(1)+'" fill="rgba(40,90,180,'+br+')" stroke="#1e3a7a" stroke-width="'+(showGrid?0.7:0.25)+'"/>';
     }
   }
+  // bright content overlay (suggests live image)
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" fill="rgba(80,160,240,0.18)"/>';
   svg+='</g>';
 
-  var sBC=anyOvf?'#ff5e57':(hasPole?'#f5a623':'#4f8aff');
-  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="none" stroke="'+sBC+'" stroke-width="'+(anyOvf?2.5:2)+'"/>';
-  svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY+spH/2+4)+'" text-anchor="middle" font-size="'+Math.max(9,Math.min(12,spW/12))+'" font-family="\'DM Mono\',monospace" fill="'+(hasPole&&!anyOvf?'#ffca6a':'#7ab4ff')+'" opacity="0.9">'+di+'" · '+s.qW+'x'+s.qH+'</text>';
+  var sBC=anyOvf?'#ff5e57':(hasPole?'#f5a623':'#1d2a52');
+  svg+='<rect x="'+scrX+'" y="'+scrY+'" width="'+spW+'" height="'+spH+'" rx="1" fill="none" stroke="'+sBC+'" stroke-width="'+(anyOvf?2.5:1.6)+'"/>';
+  svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY+spH/2+4)+'" text-anchor="middle" font-size="'+Math.max(9,Math.min(12,spW/12))+'" font-family="\'DM Mono\',monospace" fill="rgba(255,255,255,0.92)">'+di+'" · '+s.qW+'x'+s.qH+'</text>';
 
   if(anyOvf){
     var wW2=Math.min(spW*0.9,200),wH2=36,wX2=scrX+spW/2-wW2/2,wY2=scrY+spH/2-wH2/2;
-    svg+='<rect x="'+wX2+'" y="'+wY2+'" width="'+wW2+'" height="'+wH2+'" rx="5" fill="rgba(255,50,40,0.88)" stroke="#ff5e57" stroke-width="1.2"/>';
+    svg+='<rect x="'+wX2+'" y="'+wY2+'" width="'+wW2+'" height="'+wH2+'" rx="5" fill="rgba(255,50,40,0.9)" stroke="#ff5e57" stroke-width="1.2"/>';
     svg+='<text x="'+(scrX+spW/2)+'" y="'+(wY2+14)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff" font-family="\'DM Sans\',sans-serif">Layar melebihi bidang!</text>';
     var det=[];
     if(oW) det.push('Lebar: '+s.scrWcm+' > '+Math.round(s.wallW)+' cm');
     if(oH) det.push('Tinggi: '+(s.scrHcm+Math.round(s.offY))+' > '+Math.round(s.wallH)+' cm');
-    svg+='<text x="'+(scrX+spW/2)+'" y="'+(wY2+27)+'" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.9)" font-family="\'DM Mono\',monospace">'+det.join(' · ')+'</text>';
+    svg+='<text x="'+(scrX+spW/2)+'" y="'+(wY2+27)+'" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.95)" font-family="\'DM Mono\',monospace">'+det.join(' · ')+'</text>';
   }
 
-  svg+='<g fill="none" stroke="#6a7290" stroke-linecap="round" stroke-linejoin="round" stroke-width="'+stW+'"><circle cx="'+hx+'" cy="'+(hy+hhr)+'" r="'+hhr+'" fill="#6a7290" stroke="none"/><path d="M'+hx+','+(neckY)+' L'+(hx-sw)+','+shoulderY+' L'+(hx-sw)+','+(shoulderY+18)+' M'+hx+','+neckY+' L'+(hx+sw)+','+shoulderY+' L'+(hx+sw)+','+(shoulderY+18)+' M'+(hx-sw)+','+shoulderY+' L'+(hx-hw)+','+hipY+' L'+(hx+hw)+','+hipY+' L'+(hx+sw)+','+shoulderY+' M'+(hx-hw)+','+hipY+' L'+(hx-hw*0.8)+','+kneeY+' L'+(hx-hw*0.8)+','+baseY+' M'+(hx+hw)+','+hipY+' L'+(hx+hw*0.8)+','+kneeY+' L'+(hx+hw*0.8)+','+baseY+'"/></g>';
-  svg+='<text x="'+hx+'" y="'+(baseY+13)+'" text-anchor="middle" font-size="9.5" fill="#6a7290" font-family="\'DM Sans\',sans-serif">170 cm</text>';
+  // Person silhouette image (replaces stick figure)
+  var humanH=Math.max(170*sc,46);
+  var humanW=humanH*0.42;
+  var hx=hasPole?Math.max(wallX+10,scrX-humanW-10):(wallX>humanW+14?wallX-humanW-8:Math.max(6,wallX-humanW+4));
+  svg+='<image href="/images/person.png" x="'+hx+'" y="'+(baseY-humanH)+'" width="'+humanW+'" height="'+humanH+'" preserveAspectRatio="xMidYMax meet" opacity="'+(hasPole?0.92:0.85)+'"/>';
+  svg+='<text x="'+(hx+humanW/2)+'" y="'+(baseY+13)+'" text-anchor="middle" font-size="9.5" fill="'+(hasPole?'#1a1a1a':'#3a3a3a')+'" font-family="\'DM Sans\',sans-serif">170 cm</text>';
 
-  var dtY=wallY-14,wLabel=hasPole?(Math.round(ewW)+' cm'):(Math.round(s.wallW)+' cm');
-  svg+='<line x1="'+wallX+'" y1="'+dtY+'" x2="'+(wallX+wpW)+'" y2="'+dtY+'" stroke="#4f8aff" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
-  svg+='<text x="'+(wallX+wpW/2)+'" y="'+(dtY-4)+'" text-anchor="middle" font-size="10.5" fill="#6a7fa0" font-family="\'DM Sans\',sans-serif">'+wLabel+'</text>';
-  var drX=wallX+wpW+14,hLabel=hasPole?(Math.round(ewH)+' cm'):(Math.round(s.wallH)+' cm');
-  svg+='<line x1="'+drX+'" y1="'+wallY+'" x2="'+drX+'" y2="'+baseY+'" stroke="#4f8aff" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
-  svg+='<text x="'+(drX+4)+'" y="'+(wallY+wpH/2+4)+'" text-anchor="start" font-size="10.5" fill="#6a7fa0" font-family="\'DM Sans\',sans-serif">'+hLabel+'</text>';
-  if(spW>40){svg+='<line x1="'+scrX+'" y1="'+(scrY-10)+'" x2="'+(scrX+spW)+'" y2="'+(scrY-10)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.8"/>';svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY-13)+'" text-anchor="middle" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrWcm+' cm</text>';}
-  if(spH>30){var sdrX=scrX+spW+10;svg+='<line x1="'+sdrX+'" y1="'+scrY+'" x2="'+sdrX+'" y2="'+(scrY+spH)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.8"/>';svg+='<text x="'+(sdrX+3)+'" y="'+(scrY+spH/2+4)+'" text-anchor="start" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrHcm+' cm</text>';}
-  if(s.offY>5&&!hasPole){var offX=scrX-12,offColor=oH?'#ff5e57':'#00d4aa';svg+='<line x1="'+offX+'" y1="'+(scrY+spH)+'" x2="'+offX+'" y2="'+baseY+'" stroke="'+offColor+'" stroke-width="1" marker-start="url(#vag2)" marker-end="url(#vag)" opacity="0.9"/>';svg+='<text x="'+(offX-5)+'" y="'+(scrY+spH+s.offY*sc/2+4)+'" text-anchor="end" font-size="9.5" fill="'+offColor+'" font-family="\'DM Mono\',monospace">'+Math.round(s.offY)+' cm</text>';}
-  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+18)+'" text-anchor="end" font-size="9.5" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+optV.toFixed(1)+' m</text>';
-  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+28)+'" text-anchor="end" font-size="9" fill="#6a7290" font-family="\'DM Sans\',sans-serif">jarak optimal</text>';
+  // Helper for chip-style dimension labels (matches reference image)
+  function chip(x,y,txt,col){
+    col=col||'#3a3a3a';
+    var pad=4, fs=9.5, w=txt.length*5.4+pad*2, h=14;
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="2" fill="'+col+'"/>'
+      +'<text x="'+x+'" y="'+(y+3)+'" text-anchor="middle" font-size="'+fs+'" fill="#fff" font-family="\'DM Sans\',sans-serif" font-weight="500">'+txt+'</text>';
+  }
+
+  function fmtM(cm){ var m=cm/100; return (m>=10?Math.round(m):m.toFixed(m<1?2:1).replace(/\.0$/,''))+' m'; }
+
+  if(!hasPole){
+    // Indoor: dimension chips on margins (top, sides, bottom) + screen W/H
+    var mTop=Math.max(0,Math.round(s.wallH-s.scrHcm-s.offY));
+    var mSide=Math.max(0,Math.round((s.wallW-s.scrWcm)/2));
+    var mBot=Math.max(0,Math.round(s.offY));
+    // Top: left margin chip, screen-W chip, right margin chip — all on a single dotted alignment line
+    var topChipY=wallY-12;
+    // dotted guide lines from screen corners up to chip line
+    svg+='<line x1="'+scrX+'" y1="'+scrY+'" x2="'+scrX+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+(scrX+spW)+'" y1="'+scrY+'" x2="'+(scrX+spW)+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+wallY+'" x2="'+wallX+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+(wallX+wpW)+'" y1="'+wallY+'" x2="'+(wallX+wpW)+'" y2="'+topChipY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    if(scrX-wallX>22) svg+=chip((wallX+scrX)/2, topChipY, fmtM(mSide));
+    svg+=chip(scrX+spW/2, topChipY, fmtM(s.scrWcm));
+    if((wallX+wpW)-(scrX+spW)>22) svg+=chip((scrX+spW+wallX+wpW)/2, topChipY, fmtM(mSide));
+
+    // Left side: top margin chip, screen height chip, bottom margin chip
+    var leftChipX=wallX-22;
+    svg+='<line x1="'+wallX+'" y1="'+wallY+'" x2="'+leftChipX+'" y2="'+wallY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+scrY+'" x2="'+leftChipX+'" y2="'+scrY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+(scrY+spH)+'" x2="'+leftChipX+'" y2="'+(scrY+spH)+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    svg+='<line x1="'+wallX+'" y1="'+baseY+'" x2="'+leftChipX+'" y2="'+baseY+'" stroke="#a8a399" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    if(scrY-wallY>16) svg+=chip(leftChipX, (wallY+scrY)/2, fmtM(mTop));
+    svg+=chip(leftChipX, scrY+spH/2, fmtM(s.scrHcm));
+    if(baseY-(scrY+spH)>16) svg+=chip(leftChipX, (scrY+spH+baseY)/2, fmtM(mBot));
+  } else {
+    // Outdoor: total wall (sky area) width/height chips
+    var dtY=wallY-14;
+    svg+='<line x1="'+wallX+'" y1="'+dtY+'" x2="'+(wallX+wpW)+'" y2="'+dtY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
+    svg+='<text x="'+(wallX+wpW/2)+'" y="'+(dtY-4)+'" text-anchor="middle" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewW)+' cm</text>';
+    var drX=wallX+wpW+14;
+    svg+='<line x1="'+drX+'" y1="'+wallY+'" x2="'+drX+'" y2="'+baseY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
+    svg+='<text x="'+(drX+4)+'" y="'+(wallY+wpH/2+4)+'" text-anchor="start" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewH)+' cm</text>';
+    // Screen W/H labels
+    if(spW>40){
+      svg+='<line x1="'+scrX+'" y1="'+(scrY-10)+'" x2="'+(scrX+spW)+'" y2="'+(scrY-10)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
+      svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY-13)+'" text-anchor="middle" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrWcm+' cm</text>';
+    }
+    if(spH>30){
+      var sdrX=scrX+spW+10;
+      svg+='<line x1="'+sdrX+'" y1="'+scrY+'" x2="'+sdrX+'" y2="'+(scrY+spH)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
+      svg+='<text x="'+(sdrX+3)+'" y="'+(scrY+spH/2+4)+'" text-anchor="start" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrHcm+' cm</text>';
+    }
+  }
+
+  // Optimal viewing distance label
+  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+22)+'" text-anchor="end" font-size="9.5" fill="'+(hasPole?'#1a1a1a':'#2c3242')+'" font-family="\'DM Mono\',monospace" font-weight="600">'+optV.toFixed(1)+' m</text>';
+  svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+33)+'" text-anchor="end" font-size="9" fill="#5a5a5a" font-family="\'DM Sans\',sans-serif">jarak optimal</text>';
 
   document.getElementById('viz-stage').innerHTML=svg;
 
