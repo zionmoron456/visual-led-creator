@@ -1225,25 +1225,8 @@ function vizRenderGrid(){
     if(scrY-wallY>16) svg+=chip(leftChipX, (wallY+scrY)/2, fmtM(mTop));
     svg+=chip(leftChipX, scrY+spH/2, fmtM(s.scrHcm));
     if(baseY-(scrY+spH)>16) svg+=chip(leftChipX, (scrY+spH+baseY)/2, fmtM(mBot));
-  } else {
-    // Outdoor: total wall (sky area) width/height chips
-    var dtY=wallY-14;
-    svg+='<line x1="'+wallX+'" y1="'+dtY+'" x2="'+(wallX+wpW)+'" y2="'+dtY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
-    svg+='<text x="'+(wallX+wpW/2)+'" y="'+(dtY-4)+'" text-anchor="middle" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewW)+' cm</text>';
-    var drX=wallX+wpW+14;
-    svg+='<line x1="'+drX+'" y1="'+wallY+'" x2="'+drX+'" y2="'+baseY+'" stroke="#4a5060" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)"/>';
-    svg+='<text x="'+(drX+4)+'" y="'+(wallY+wpH/2+4)+'" text-anchor="start" font-size="10.5" fill="#2c3242" font-family="\'DM Sans\',sans-serif" font-weight="500">'+Math.round(ewH)+' cm</text>';
-    // Screen W/H labels
-    if(spW>40){
-      svg+='<line x1="'+scrX+'" y1="'+(scrY-10)+'" x2="'+(scrX+spW)+'" y2="'+(scrY-10)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
-      svg+='<text x="'+(scrX+spW/2)+'" y="'+(scrY-13)+'" text-anchor="middle" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrWcm+' cm</text>';
-    }
-    if(spH>30){
-      var sdrX=scrX+spW+10;
-      svg+='<line x1="'+sdrX+'" y1="'+scrY+'" x2="'+sdrX+'" y2="'+(scrY+spH)+'" stroke="'+sBC+'" stroke-width="1" marker-start="url(#va2)" marker-end="url(#va)" opacity="0.85"/>';
-      svg+='<text x="'+(sdrX+3)+'" y="'+(scrY+spH/2+4)+'" text-anchor="start" font-size="10" fill="'+sBC+'" font-family="\'DM Mono\',monospace">'+s.scrHcm+' cm</text>';
-    }
   }
+  // (no field/screen dimension chips for outdoor-with-pole — visualization stays clean)
 
   // Optimal viewing distance label
   svg+='<text x="'+(wallX+wpW-2)+'" y="'+(baseY+22)+'" text-anchor="end" font-size="9.5" fill="'+(hasPole?'#1a1a1a':'#2c3242')+'" font-family="\'DM Mono\',monospace" font-weight="600">'+optV.toFixed(1)+' m</text>';
