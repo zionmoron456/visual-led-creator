@@ -749,7 +749,43 @@ function exportExcel(){
 }
 
 // ─── PDF DATASHEET ────────────────────────────────────────────────────────────
-function exportDatasheetPDF(){
+async function svgStageToPng(scale){
+  scale=scale||2;
+  var svgEl=document.getElementById('viz-stage');
+  if(!svgEl) return null;
+  var vb=svgEl.viewBox.baseVal, w=vb.width||580, h=vb.height||320;
+  var clone=svgEl.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+  clone.setAttribute('width',w); clone.setAttribute('height',h);
+  // inline external <image> hrefs as data URLs (avoid canvas tainting/loading delays)
+  var imgs=clone.querySelectorAll('image');
+  for(var i=0;i<imgs.length;i++){
+    var href=imgs[i].getAttribute('href')||imgs[i].getAttribute('xlink:href');
+    if(href && href.indexOf('data:')!==0){
+      try{
+        var resp=await fetch(href);
+        var blob=await resp.blob();
+        var dataUrl=await new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(blob);});
+        imgs[i].setAttribute('href',dataUrl);
+        imgs[i].removeAttribute('xlink:href');
+      }catch(e){}
+    }
+  }
+  var xml=new XMLSerializer().serializeToString(clone);
+  var url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
+  var img=new Image();
+  await new Promise(function(res,rej){img.onload=res;img.onerror=rej;img.src=url;});
+  var canvas=document.createElement('canvas');
+  canvas.width=w*scale; canvas.height=h*scale;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  URL.revokeObjectURL(url);
+  return {dataUrl:canvas.toDataURL('image/png'), w:w, h:h};
+}
+
+async function exportDatasheetPDF(){
   if(!lastCalc.p){alert('Silakan hitung dulu sebelum export.');return;}
   if(!window.jspdf||!window.jspdf.jsPDF){alert('jsPDF belum siap, coba lagi sebentar.');return;}
 
