@@ -939,7 +939,7 @@ async function exportDatasheetPDF(){
   y+=3;y=subHdr(y,'TKDN Information');
   y=specRow(y,'Status',p.tkdn,false);
   if(isTKDN&&tkdnMap[p.pitch]) y=specRow(y,'Nilai TKDN',tkdnMap[p.pitch],true);
-  drawFooter(3,4);
+  drawFooter(3,5);
 
   // ── PAGE 4: Cabinet Specification ──────────────────────────────────────────
   doc.addPage();
