@@ -1276,6 +1276,7 @@ function vizRenderGrid(){
   var g2=vizGcd(Math.round(arW2),Math.round(arH2));
   var chips='<span class="viz-res-chip">Diagonal: <b>'+di+'"</b></span><span class="viz-res-chip">Grid: <b>'+s.qW+'x'+s.qH+'</b></span><span class="viz-res-chip">Layar: <b>'+s.scrWcm+'x'+s.scrHcm+' cm</b></span><span class="viz-res-chip">AR: <b>'+Math.round(arW2/g2)+':'+Math.round(arH2/g2)+'</b></span><span class="viz-res-chip">Jarak: <b>'+optV.toFixed(1)+' m</b></span><span class="viz-res-chip">Lantai: <b>'+Math.round(s.offY)+' cm</b></span>';
   if(hasPole){var acp3=15;chips+='<span class="viz-res-chip" style="color:var(--warn)">Tiang: '+s.poleType+' · D'+Math.round(s.poleW)+'"</span><span class="viz-res-chip" style="color:#00d4aa">ACP: '+(s.scrWcm+acp3*2)+'x'+(s.scrHcm+acp3*2)+' cm</span>';}
+  else if(isOutdoor){var acp4=15;chips+='<span class="viz-res-chip" style="color:#00d4aa">ACP: '+(s.scrWcm+acp4*2)+'x'+(s.scrHcm+acp4*2)+' cm</span>';}
   if(anyOvf) chips+='<span class="viz-res-chip" style="color:#ff5e57;font-weight:600">Bidang terlalu kecil</span>';
   document.getElementById('viz-res-info').innerHTML=chips;
 }
