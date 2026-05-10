@@ -1011,14 +1011,17 @@ async function exportDatasheetPDF(){
                                : ((c.vpPorts && c.vpPorts>0) ? c.vpPorts : 16);
   var cardLabel    = isHSeries ? ((prefer20El&&prefer20El.checked)?'H_20x RJ45 Sending Card':'H_16x RJ45 + 2x Fiber Sending Card')
                                : ((vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card');
+  // Per-card pixel cap (H Series RJ45 sending cards = 4K / 8.29M px)
+  var cardMaxPxLocal = isHSeries ? 8294400 : Infinity;
+  var cabsPerCardMax = isFinite(cardMaxPxLocal) ? Math.max(1, Math.floor(cardMaxPxLocal/cabPxCount)) : Infinity;
   var routePatternLabel='Max '+maxCabPerPort+' cabinets/port, split by pixel limit';
 
-  // Build port routes. Rule: every port must stay <= 650,000 px.
-  // If one full column exceeds the limit (P1.2, 6-high cabinet), route the
-  // maximum safe vertical run first, then group the remaining row(s)
-  // horizontally in chunks that also stay within the same pixel limit.
+  // Build port routes grouped by card. Each card respects BOTH portsPerCard
+  // AND the per-card pixel budget (4K for H Series RJ45 cards).
   var portRoutes=[];
-  function addRoute(cells){ if(cells&&cells.length) portRoutes.push(cells); }
+  var cardOfPortArr=[];
+  function addRoute(cells, cardIdx){ if(cells&&cells.length){ portRoutes.push(cells); cardOfPortArr.push(cardIdx); } }
+  var curCard=0;
   if(c.qH>maxCabPerPort){
     var mainRows=maxCabPerPort;
     var remRows=c.qH-mainRows;
@@ -1026,21 +1029,27 @@ async function exportDatasheetPDF(){
     var startCol=0;
     while(startCol<c.qW){
       var segCols=1;
-      while(startCol+segCols<c.qW && portsNeededForCols(segCols+1)<=portsPerCard) segCols++;
+      while(startCol+segCols<c.qW
+            && portsNeededForCols(segCols+1)<=portsPerCard
+            && (segCols+1)*c.qH<=cabsPerCardMax) segCols++;
       for(var vc=0; vc<segCols; vc++){
         var col=startCol+vc, vCells=[];
         for(var vr=0; vr<mainRows; vr++) vCells.push({c:col,r:vr});
-        addRoute(vCells);
+        addRoute(vCells, curCard);
       }
       var leftovers=[];
       for(var rr=mainRows; rr<c.qH; rr++){
         for(var hc=0; hc<segCols; hc++) leftovers.push({c:startCol+hc,r:rr});
       }
-      for(var li=0; li<leftovers.length; li+=maxCabPerPort) addRoute(leftovers.slice(li,li+maxCabPerPort));
+      for(var li=0; li<leftovers.length; li+=maxCabPerPort) addRoute(leftovers.slice(li,li+maxCabPerPort), curCard);
       startCol+=segCols;
+      curCard++;
     }
   }else{
     var colsPerPort=Math.max(1, Math.floor(maxCabPerPort/c.qH));
+    var colsPerCardByPx=Math.max(colsPerPort, Math.floor(cabsPerCardMax/c.qH));
+    var portsPerCardCols=portsPerCard*colsPerPort;
+    var colsPerCard=Math.max(colsPerPort, Math.min(portsPerCardCols, colsPerCardByPx));
     routePatternLabel=colsPerPort+' full column(s) per port';
     for(var sc=0; sc<c.qW; sc+=colsPerPort){
       var route=[];
@@ -1048,11 +1057,13 @@ async function exportDatasheetPDF(){
         if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri}); }
         else        { for(var ri2=c.qH-1; ri2>=0; ri2--) route.push({c:ci,r:ri2}); }
       }
-      addRoute(route);
+      var cardIdx=Math.floor(sc/colsPerCard);
+      addRoute(route, cardIdx);
     }
+    curCard=Math.floor((c.qW-1)/colsPerCard)+1;
   }
   var portsTotal=portRoutes.length;
-  var nCards=Math.max(1,Math.ceil(portsTotal/portsPerCard));
+  var nCards=Math.max(1, curCard);
   // Assign each cabinet a port index (0-based) and per-cabinet position within port
   var portOfCab={}, posInPort={};
   for(var piAssign=0;piAssign<portRoutes.length;piAssign++){
@@ -1062,8 +1073,12 @@ async function exportDatasheetPDF(){
       posInPort[cell.c+','+cell.r]=riAssign;
     }
   }
-  function cardOfPort(pi){ return Math.min(nCards-1, Math.floor(pi/portsPerCard)); }
-  function portInCard(pi){ return pi - cardOfPort(pi)*portsPerCard + 1; }
+  function cardOfPort(pi){ return Math.min(nCards-1, cardOfPortArr[pi]||0); }
+  function portInCard(pi){
+    var ci=cardOfPort(pi), n=0;
+    for(var k=0;k<=pi;k++) if(cardOfPort(k)===ci) n++;
+    return n;
+  }
 
   // ── Layout ────────────────────────────────────────────────────────────────
   var gX=ML, gY=y;
