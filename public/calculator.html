@@ -1003,8 +1003,14 @@ async function exportDatasheetPDF(){
   var maxCabPerPort= Math.max(1, Math.floor(pxPerPort/cabPxCount));
   var cabsPerPort  = maxCabPerPort;
   var totalCab     = c.qW * c.qH;
-  var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
-  var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
+  // H Series sending card port count: 20 if user prefers 20xRJ45, else 16.
+  // Non-H-Series fallback uses chassis ports (vpPorts) or 16.
+  var prefer20El=document.getElementById('pref-20rj45');
+  var isHSeries=(vpInfo&&vpInfo.hSeries)||(c.vpKey&&/^H/.test(c.vpKey));
+  var portsPerCard = isHSeries ? (prefer20El&&prefer20El.checked?20:16)
+                               : ((c.vpPorts && c.vpPorts>0) ? c.vpPorts : 16);
+  var cardLabel    = isHSeries ? ((prefer20El&&prefer20El.checked)?'H_20x RJ45 Sending Card':'H_16x RJ45 + 2x Fiber Sending Card')
+                               : ((vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card');
   var routePatternLabel='Max '+maxCabPerPort+' cabinets/port, split by pixel limit';
 
   // Build port routes. Rule: every port must stay <= 650,000 px.
@@ -1067,8 +1073,8 @@ async function exportDatasheetPDF(){
   if(cabH<6) cabH=6;
   var gH=cabH*c.qH;
 
-  var bgCols=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[245,220,235]];
-  var dkCols=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[200,70,140]];
+  var bgCols=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[250,220,232],[222,242,242],[244,238,210],[226,224,244],[244,228,222],[218,236,232],[244,224,240]];
+  var dkCols=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[210,70,140],[40,150,150],[180,150,40],[90,90,200],[200,90,60],[40,140,120],[200,80,170]];
 
   // Card region backgrounds (whole columns per card, contiguous)
   // For visual grouping: shade columns by the card of the FIRST cabinet entering each column
