@@ -1338,7 +1338,11 @@ async function exportDatasheetPDF(){
     var rt=branchRoutes[br2];
     var dkR2=dkColsP[br2%dkColsP.length];
     for(var kk=1;kk<rt.length;kk++){
-      var aC=pCellCenter(rt[kk-1].c,rt[kk-1].r), bC=pCellCenter(rt[kk].c,rt[kk].r);
+      var pa=rt[kk-1], pb=rt[kk];
+      // Hanya gambar arrow antar sel yang BERSEBELAHAN (orthogonal) — no zigzag/diagonal
+      var adj=(pa.c===pb.c && Math.abs(pa.r-pb.r)===1) || (pa.r===pb.r && Math.abs(pa.c-pb.c)===1);
+      if(!adj) continue;
+      var aC=pCellCenter(pa.c,pa.r), bC=pCellCenter(pb.c,pb.r);
       pDrawArrow(aC.x,aC.y,bC.x,bC.y,dkR2);
     }
   }
