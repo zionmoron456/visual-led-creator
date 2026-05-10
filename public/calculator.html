@@ -1205,10 +1205,16 @@ async function exportDatasheetPDF(){
   // Single-phase 220V, derating 80%, MCB 16A per branch (typical PLN).
   var voltAC=220, branchAmpere=16, derate=0.8;
   var branchCapW=Math.floor(voltAC*branchAmpere*derate); // 2816W
-  var cabsPerBranch=Math.max(1,Math.floor(branchCapW/p.maxW));
-  var nBranches=Math.ceil(c.total/cabsPerBranch);
+  var cabsPerBranchMax=Math.max(1,Math.floor(branchCapW/p.maxW));
+  var nBranches=Math.ceil(c.total/cabsPerBranchMax);
+  // Even distribution: spread cabinets as evenly as possible across branches.
+  var baseCabs=Math.floor(c.total/nBranches);
+  var extraCabs=c.total%nBranches;
+  var branchSizes=[];
+  for(var bs=0;bs<nBranches;bs++) branchSizes.push(baseCabs+(bs<extraCabs?1:0));
+  var cabsPerBranch=branchSizes[0];
   var branchPwrMax=cabsPerBranch*p.maxW;
-  var lastBranchCabs=c.total-(nBranches-1)*cabsPerBranch;
+  var lastBranchCabs=branchSizes[nBranches-1];
   var lastBranchPwrMax=lastBranchCabs*p.maxW;
   var totalRecW=Math.round(c.powerMax*1.3);
   // Choose main MCB: I = totalRec / 220 / 0.8, round up to standard
