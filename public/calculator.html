@@ -1192,6 +1192,141 @@ async function exportDatasheetPDF(){
 
   drawFooter(5,6);
 
+  // ── PAGE 6: Power Flow Drawing ─────────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Power Flow Drawing');
+  y=MT+4;
+  doc.setFillColor(0,60,140);doc.rect(ML,y,CW,10,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text('Electrical Power Distribution Diagram',ML+4,y+6.8);
+  y+=14;
+
+  // ── Power circuit calculation ──────────────────────────────────────────
+  // Single-phase 220V, derating 80%, MCB 16A per branch (typical PLN).
+  var voltAC=220, branchAmpere=16, derate=0.8;
+  var branchCapW=Math.floor(voltAC*branchAmpere*derate); // 2816W
+  var cabsPerBranch=Math.max(1,Math.floor(branchCapW/p.maxW));
+  var nBranches=Math.ceil(c.total/cabsPerBranch);
+  var branchPwrMax=cabsPerBranch*p.maxW;
+  var lastBranchCabs=c.total-(nBranches-1)*cabsPerBranch;
+  var lastBranchPwrMax=lastBranchCabs*p.maxW;
+  var totalRecW=Math.round(c.powerMax*1.3);
+  // Choose main MCB: I = totalRec / 220 / 0.8, round up to standard
+  var mainAreq=totalRecW/voltAC/0.8;
+  var mcbStd=[10,16,20,25,32,40,50,63,80,100,125,160,200,250];
+  var mainMCB=mcbStd.find(function(a){return a>=mainAreq;})||Math.ceil(mainAreq/10)*10;
+  // Phase suggestion: if totalRec > 4400W (20A single phase) use 3-phase
+  var use3Phase=totalRecW>4400;
+  var phaseLabel=use3Phase?'3 Phase 380V/220V':'1 Phase 220V';
+  var mainMCBLabel=use3Phase?(Math.ceil(mainAreq/3))+'A x 3P':mainMCB+'A 1P';
+  if(use3Phase){
+    var mcb3=mcbStd.find(function(a){return a>=mainAreq/3;})||Math.ceil(mainAreq/3/10)*10;
+    mainMCBLabel=mcb3+'A x 3P';
+  }
+
+  // ── Diagram (centered) ────────────────────────────────────────────────
+  var dgX=ML, dgY=y, dgW=CW;
+  var cx=dgX+dgW/2;
+
+  // PLN source box
+  var plnW=46,plnH=14;
+  doc.setFillColor(255,235,200);doc.setDrawColor(200,140,30);doc.setLineWidth(0.5);
+  doc.rect(cx-plnW/2,dgY,plnW,plnH,'FD');
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(120,70,0);
+  doc.text('PLN '+phaseLabel,cx,dgY+5.5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
+  doc.text('Recommended: '+fmtNum(totalRecW)+' W',cx,dgY+11,{align:'center'});
+
+  // line down to main MCB
+  doc.setDrawColor(60,60,60);doc.setLineWidth(0.6);
+  doc.line(cx,dgY+plnH,cx,dgY+plnH+6);
+
+  // Main MCB / Panel box
+  var mcbY=dgY+plnH+6, mcbW=70, mcbH=14;
+  doc.setFillColor(0,86,179);doc.setDrawColor(0,60,140);
+  doc.rect(cx-mcbW/2,mcbY,mcbW,mcbH,'FD');
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(255,255,255);
+  doc.text('Main Panel / MCB '+mainMCBLabel,cx,mcbY+5.5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text('Total Max: '+fmtNum(c.powerMax)+' W',cx,mcbY+10.8,{align:'center'});
+
+  // Bus bar
+  var busY=mcbY+mcbH+5;
+  doc.setDrawColor(60,60,60);doc.setLineWidth(0.6);
+  doc.line(cx,mcbY+mcbH,cx,busY);
+
+  // Branches
+  var maxShow=Math.min(nBranches,8); // cap visual to 8 branches; if more, show "..." middle
+  var branchSlotW=Math.min(34, dgW/maxShow);
+  var totalBusW=branchSlotW*(maxShow-1);
+  var busLeft=cx-totalBusW/2, busRight=cx+totalBusW/2;
+  if(maxShow>1) doc.line(busLeft,busY,busRight,busY);
+
+  var brBoxW=28, brBoxH=10, cabBoxH=14;
+  var branchYTop=busY+6;
+  var cabYTop=branchYTop+brBoxH+4;
+  for(var bi=0;bi<maxShow;bi++){
+    var bx = maxShow===1 ? cx : (busLeft + bi*branchSlotW);
+    // vertical down from bus
+    doc.setDrawColor(60,60,60);doc.setLineWidth(0.5);
+    doc.line(bx,busY,bx,branchYTop);
+    // Branch MCB box
+    doc.setFillColor(245,245,245);doc.setDrawColor(120,120,120);
+    doc.rect(bx-brBoxW/2,branchYTop,brBoxW,brBoxH,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);
+    var brLabel='MCB '+branchAmpere+'A';
+    if(nBranches>maxShow && bi===Math.floor(maxShow/2)) brLabel='... ('+(nBranches-maxShow+1)+' more)';
+    doc.text(brLabel,bx,branchYTop+4,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80,80,80);
+    var thisCabs=(bi===maxShow-1 && nBranches===maxShow)?lastBranchCabs:cabsPerBranch;
+    var thisW=(bi===maxShow-1 && nBranches===maxShow)?lastBranchPwrMax:branchPwrMax;
+    doc.text(fmtNum(thisW)+' W',bx,branchYTop+8,{align:'center'});
+    // line to cabinet group
+    doc.setDrawColor(60,60,60);doc.setLineWidth(0.5);
+    doc.line(bx,branchYTop+brBoxH,bx,cabYTop);
+    // Cabinet group box (port-color tinted)
+    var bgC=[200,225,245];
+    doc.setFillColor(bgC[0],bgC[1],bgC[2]);doc.setDrawColor(0,86,179);
+    doc.rect(bx-brBoxW/2,cabYTop,brBoxW,cabBoxH,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,60,140);
+    doc.text('Group '+(bi+1),bx,cabYTop+4.5,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(0,0,0);
+    doc.text(thisCabs+' cabinet',bx,cabYTop+8.5,{align:'center'});
+    doc.setFontSize(6.5);doc.setTextColor(80,80,80);
+    doc.text('@ '+p.maxW+'W',bx,cabYTop+12,{align:'center'});
+  }
+  y=cabYTop+cabBoxH+8;
+
+  // ── Specification rows ────────────────────────────────────────────────
+  y=secHeader(y,'Power Distribution Specification');
+  var altp=false;
+  var pfRows=[
+    ['AC Input','AC '+(use3Phase?'380V':'220V')+' @ 50/60Hz'],
+    ['Main MCB Rating',mainMCBLabel],
+    ['Branch Circuit',branchAmpere+'A MCB / 220V (derated 80%)'],
+    ['Branch Capacity (Max)',fmtNum(branchCapW)+' W per branch'],
+    ['Cabinets per Branch',cabsPerBranch+' cabinet ('+fmtNum(branchPwrMax)+' W)'],
+    ['Total Branches Required',nBranches+' branch'],
+    ['Total Cabinets',c.total+' unit ('+c.qW+' x '+c.qH+')'],
+    ['Power per Cabinet (Max)',p.maxW+' W'],
+    ['Power per Cabinet (Avg)',p.avgW+' W'],
+    ['Total Screen Max Power',fmtNum(c.powerMax)+' W'],
+    ['Total Screen Avg Power',fmtNum(c.powerAvg)+' W'],
+    ['Recommended PLN Capacity',fmtNum(totalRecW)+' W (130% of max)']
+  ];
+  pfRows.forEach(function(r){y=specRow(y,r[0],r[1],altp);altp=!altp;});
+
+  y+=4;
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  var notes=[
+    'Note: Diagram is schematic. Cabling, grounding, and protection devices must comply with PUIL 2011 / SNI 04-0225.',
+    'Use copper conductor sized per branch current (min. 2.5 mm2 for 16A). Provide ELCB/RCD 30mA on each branch for safety.',
+    'For installations exceeding 4400 W, 3-phase supply (380V) is recommended for balanced load distribution.'
+  ];
+  notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
+
+  drawFooter(6,6);
+
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
 
