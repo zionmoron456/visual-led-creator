@@ -997,30 +997,58 @@ async function exportDatasheetPDF(){
   // A new port begins when the per-port pixel budget (~650k px) is exhausted.
   var cabPxCount   = p.pxW * p.pxH;
   var pxPerPort    = 650000;
-  // Column-aligned routing (NovaStar/VNNOX convention): each port handles
-  // whole columns so its endpoint always lands on a row boundary aligned
-  // with the next port's start (or the next bend).
-  var colPxCount   = c.qH * cabPxCount;
-  var colsPerPort  = Math.max(1, Math.floor(pxPerPort/colPxCount));
-  var cabsPerPort  = colsPerPort * c.qH;
+  var maxCabPerPort= Math.max(1, Math.floor(pxPerPort/cabPxCount));
   var totalCab     = c.qW * c.qH;
-  var portsTotal   = Math.max(1, Math.ceil(c.qW/colsPerPort));
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
-  var nCards       = Math.max(1, Math.ceil(portsTotal/portsPerCard));
   var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
 
-  // Build serpentine path: array of {col,row} in traversal order
-  var path=[];
-  for(var ci=0; ci<c.qW; ci++){
-    if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) path.push({c:ci,r:ri}); }
-    else        { for(var ri2=c.qH-1; ri2>=0; ri2--) path.push({c:ci,r:ri2}); }
+  // Build port routes. Rule: every port must stay <= 650,000 px.
+  // If one full column exceeds the limit (P1.2, 6-high cabinet), route the
+  // maximum safe vertical run first, then group the remaining row(s)
+  // horizontally in chunks that also stay within the same pixel limit.
+  var portRoutes=[];
+  function addRoute(cells){ if(cells&&cells.length) portRoutes.push(cells); }
+  if(c.qH>maxCabPerPort){
+    var mainRows=maxCabPerPort;
+    var remRows=c.qH-mainRows;
+    function portsNeededForCols(n){ return n + Math.ceil((n*remRows)/maxCabPerPort); }
+    var startCol=0;
+    while(startCol<c.qW){
+      var segCols=1;
+      while(startCol+segCols<c.qW && portsNeededForCols(segCols+1)<=portsPerCard) segCols++;
+      for(var vc=0; vc<segCols; vc++){
+        var col=startCol+vc, vCells=[];
+        for(var vr=0; vr<mainRows; vr++) vCells.push({c:col,r:vr});
+        addRoute(vCells);
+      }
+      var leftovers=[];
+      for(var rr=mainRows; rr<c.qH; rr++){
+        for(var hc=0; hc<segCols; hc++) leftovers.push({c:startCol+hc,r:rr});
+      }
+      for(var li=0; li<leftovers.length; li+=maxCabPerPort) addRoute(leftovers.slice(li,li+maxCabPerPort));
+      startCol+=segCols;
+    }
+  }else{
+    var colsPerPort=Math.max(1, Math.floor(maxCabPerPort/c.qH));
+    for(var sc=0; sc<c.qW; sc+=colsPerPort){
+      var route=[];
+      for(var ci=sc; ci<Math.min(c.qW,sc+colsPerPort); ci++){
+        if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri}); }
+        else        { for(var ri2=c.qH-1; ri2>=0; ri2--) route.push({c:ci,r:ri2}); }
+      }
+      addRoute(route);
+    }
   }
+  var portsTotal=portRoutes.length;
+  var nCards=Math.max(1,Math.ceil(portsTotal/portsPerCard));
   // Assign each cabinet a port index (0-based) and per-cabinet position within port
   var portOfCab={}, posInPort={};
-  for(var i=0;i<path.length;i++){
-    var portIdx=Math.min(portsTotal-1, Math.floor(i/cabsPerPort));
-    portOfCab[path[i].c+','+path[i].r]=portIdx;
-    posInPort[path[i].c+','+path[i].r]=i - portIdx*cabsPerPort;
+  for(var piAssign=0;piAssign<portRoutes.length;piAssign++){
+    for(var riAssign=0;riAssign<portRoutes[piAssign].length;riAssign++){
+      var cell=portRoutes[piAssign][riAssign];
+      portOfCab[cell.c+','+cell.r]=piAssign;
+      posInPort[cell.c+','+cell.r]=riAssign;
+    }
   }
   function cardOfPort(pi){ return Math.min(nCards-1, Math.floor(pi/portsPerCard)); }
   function portInCard(pi){ return pi - cardOfPort(pi)*portsPerCard + 1; }
