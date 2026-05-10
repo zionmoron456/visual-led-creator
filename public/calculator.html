@@ -997,12 +997,14 @@ async function exportDatasheetPDF(){
   // A new port begins when the per-port pixel budget (~650k px) is exhausted.
   var cabPxCount   = p.pxW * p.pxH;
   var pxPerPort    = 650000;
-  // Use full per-port pixel budget. Because cabinets flow on a continuous
-  // serpentine path, each port's endpoint is automatically the start (bend)
-  // of the next port — endpoints always align with the next port's start.
-  var cabsPerPort  = Math.max(1, Math.floor(pxPerPort/cabPxCount));
+  // Column-aligned routing (NovaStar/VNNOX convention): each port handles
+  // whole columns so its endpoint always lands on a row boundary aligned
+  // with the next port's start (or the next bend).
+  var colPxCount   = c.qH * cabPxCount;
+  var colsPerPort  = Math.max(1, Math.floor(pxPerPort/colPxCount));
+  var cabsPerPort  = colsPerPort * c.qH;
   var totalCab     = c.qW * c.qH;
-  var portsTotal   = Math.max(1, Math.ceil(totalCab/cabsPerPort));
+  var portsTotal   = Math.max(1, Math.ceil(c.qW/colsPerPort));
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
   var nCards       = Math.max(1, Math.ceil(portsTotal/portsPerCard));
   var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
