@@ -1224,78 +1224,139 @@ async function exportDatasheetPDF(){
     mainMCBLabel=mcb3+'A x 3P';
   }
 
-  // ── Diagram (centered) ────────────────────────────────────────────────
-  var dgX=ML, dgY=y, dgW=CW;
-  var cx=dgX+dgW/2;
-
-  // PLN source box
-  var plnW=46,plnH=14;
+  // ── Top: PLN → Main Panel (compact horizontal flow) ──────────────────
+  var topY=y;
+  var plnW=58, mcbW=70, boxH=14, gap=8;
+  var totalTopW=plnW+gap+mcbW;
+  var topX=ML+(CW-totalTopW)/2;
+  // PLN
   doc.setFillColor(255,235,200);doc.setDrawColor(200,140,30);doc.setLineWidth(0.5);
-  doc.rect(cx-plnW/2,dgY,plnW,plnH,'FD');
-  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(120,70,0);
-  doc.text('PLN '+phaseLabel,cx,dgY+5.5,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
-  doc.text('Recommended: '+fmtNum(totalRecW)+' W',cx,dgY+11,{align:'center'});
-
-  // line down to main MCB
+  doc.rect(topX,topY,plnW,boxH,'FD');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(120,70,0);
+  doc.text('PLN '+phaseLabel,topX+plnW/2,topY+5.5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Rec. '+fmtNum(totalRecW)+' W',topX+plnW/2,topY+10.5,{align:'center'});
+  // arrow
   doc.setDrawColor(60,60,60);doc.setLineWidth(0.6);
-  doc.line(cx,dgY+plnH,cx,dgY+plnH+6);
-
-  // Main MCB / Panel box
-  var mcbY=dgY+plnH+6, mcbW=70, mcbH=14;
+  doc.line(topX+plnW,topY+boxH/2,topX+plnW+gap,topY+boxH/2);
+  doc.triangle(topX+plnW+gap-1.5,topY+boxH/2-1.2, topX+plnW+gap-1.5,topY+boxH/2+1.2, topX+plnW+gap,topY+boxH/2,'F');
+  // Main MCB
   doc.setFillColor(0,86,179);doc.setDrawColor(0,60,140);
-  doc.rect(cx-mcbW/2,mcbY,mcbW,mcbH,'FD');
-  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(255,255,255);
-  doc.text('Main Panel / MCB '+mainMCBLabel,cx,mcbY+5.5,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(8);
-  doc.text('Total Max: '+fmtNum(c.powerMax)+' W',cx,mcbY+10.8,{align:'center'});
+  doc.rect(topX+plnW+gap,topY,mcbW,boxH,'FD');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);
+  doc.text('Main Panel  MCB '+mainMCBLabel,topX+plnW+gap+mcbW/2,topY+5.5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+  doc.text('Total Max: '+fmtNum(c.powerMax)+' W',topX+plnW+gap+mcbW/2,topY+10.5,{align:'center'});
+  y=topY+boxH+5;
 
-  // Bus bar
-  var busY=mcbY+mcbH+5;
-  doc.setDrawColor(60,60,60);doc.setLineWidth(0.6);
-  doc.line(cx,mcbY+mcbH,cx,busY);
-
-  // Branches
-  var maxShow=Math.min(nBranches,8); // cap visual to 8 branches; if more, show "..." middle
-  var branchSlotW=Math.min(34, dgW/maxShow);
-  var totalBusW=branchSlotW*(maxShow-1);
-  var busLeft=cx-totalBusW/2, busRight=cx+totalBusW/2;
-  if(maxShow>1) doc.line(busLeft,busY,busRight,busY);
-
-  var brBoxW=28, brBoxH=10, cabBoxH=14;
-  var branchYTop=busY+6;
-  var cabYTop=branchYTop+brBoxH+4;
-  for(var bi=0;bi<maxShow;bi++){
-    var bx = maxShow===1 ? cx : (busLeft + bi*branchSlotW);
-    // vertical down from bus
-    doc.setDrawColor(60,60,60);doc.setLineWidth(0.5);
-    doc.line(bx,busY,bx,branchYTop);
-    // Branch MCB box
-    doc.setFillColor(245,245,245);doc.setDrawColor(120,120,120);
-    doc.rect(bx-brBoxW/2,branchYTop,brBoxW,brBoxH,'FD');
-    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);
-    var brLabel='MCB '+branchAmpere+'A';
-    if(nBranches>maxShow && bi===Math.floor(maxShow/2)) brLabel='... ('+(nBranches-maxShow+1)+' more)';
-    doc.text(brLabel,bx,branchYTop+4,{align:'center'});
-    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80,80,80);
-    var thisCabs=(bi===maxShow-1 && nBranches===maxShow)?lastBranchCabs:cabsPerBranch;
-    var thisW=(bi===maxShow-1 && nBranches===maxShow)?lastBranchPwrMax:branchPwrMax;
-    doc.text(fmtNum(thisW)+' W',bx,branchYTop+8,{align:'center'});
-    // line to cabinet group
-    doc.setDrawColor(60,60,60);doc.setLineWidth(0.5);
-    doc.line(bx,branchYTop+brBoxH,bx,cabYTop);
-    // Cabinet group box (port-color tinted)
-    var bgC=[200,225,245];
-    doc.setFillColor(bgC[0],bgC[1],bgC[2]);doc.setDrawColor(0,86,179);
-    doc.rect(bx-brBoxW/2,cabYTop,brBoxW,cabBoxH,'FD');
-    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,60,140);
-    doc.text('Group '+(bi+1),bx,cabYTop+4.5,{align:'center'});
-    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(0,0,0);
-    doc.text(thisCabs+' cabinet',bx,cabYTop+8.5,{align:'center'});
-    doc.setFontSize(6.5);doc.setTextColor(80,80,80);
-    doc.text('@ '+p.maxW+'W',bx,cabYTop+12,{align:'center'});
+  // ── Cabinet grid grouped by power branch ─────────────────────────────
+  // Assign branches in column-serpentine order to keep groups contiguous.
+  var branchOfCab={};
+  var seq=0;
+  for(var pcc=0;pcc<c.qW;pcc++){
+    if(pcc%2===0){
+      for(var prr=0;prr<c.qH;prr++){ branchOfCab[pcc+','+prr]=Math.floor(seq/cabsPerBranch); seq++; }
+    }else{
+      for(var prr2=c.qH-1;prr2>=0;prr2--){ branchOfCab[pcc+','+prr2]=Math.floor(seq/cabsPerBranch); seq++; }
+    }
   }
-  y=cabYTop+cabBoxH+8;
+  // Same palette as data flow for visual consistency
+  var bgColsP=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[250,220,232],[222,242,242],[244,238,210],[226,224,244],[244,228,222],[218,236,232],[244,224,240]];
+  var dkColsP=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[210,70,140],[40,150,150],[180,150,40],[90,90,200],[200,90,60],[40,140,120],[200,80,170]];
+
+  var pgX=ML, pgY=y;
+  var pcabW=CW/c.qW;
+  var pcabH=Math.min(220/c.qH, pcabW*0.62, 22);
+  if(pcabH<6) pcabH=6;
+  var pgH=pcabH*c.qH;
+
+  // Fill cabinets by branch color
+  for(var ci5=0;ci5<c.qW;ci5++){
+    for(var ri5=0;ri5<c.qH;ri5++){
+      var brIdx=branchOfCab[ci5+','+ri5]||0;
+      var bgP=bgColsP[brIdx%bgColsP.length];
+      doc.setFillColor(bgP[0],bgP[1],bgP[2]);
+      doc.rect(pgX+ci5*pcabW, pgY+ri5*pcabH, pcabW, pcabH, 'F');
+      doc.setDrawColor(160,160,160);doc.setLineWidth(0.1);
+      doc.rect(pgX+ci5*pcabW, pgY+ri5*pcabH, pcabW, pcabH, 'S');
+      if(pcabW>=10 && pcabH>=10){
+        doc.setFont('helvetica','normal');doc.setFontSize(3.6);doc.setTextColor(60,60,60);
+        doc.text('Branch-'+(brIdx+1), pgX+ci5*pcabW+0.6, pgY+ri5*pcabH+1.8);
+        doc.text(p.maxW+' W', pgX+ci5*pcabW+0.6, pgY+ri5*pcabH+3.8);
+      }
+    }
+  }
+  // Branch boundary thick separator
+  doc.setLineWidth(0.7);
+  for(var ci6=0;ci6<c.qW;ci6++){
+    for(var ri6=0;ri6<c.qH;ri6++){
+      var b0=branchOfCab[ci6+','+ri6];
+      var bR=(ci6+1<c.qW)?branchOfCab[(ci6+1)+','+ri6]:b0;
+      var bD=(ri6+1<c.qH)?branchOfCab[ci6+','+(ri6+1)]:b0;
+      var dk=dkColsP[b0%dkColsP.length];
+      if(bR!==b0){
+        var dkR=dkColsP[bR%dkColsP.length];
+        doc.setDrawColor((dk[0]+dkR[0])/2,(dk[1]+dkR[1])/2,(dk[2]+dkR[2])/2);
+        doc.line(pgX+(ci6+1)*pcabW, pgY+ri6*pcabH, pgX+(ci6+1)*pcabW, pgY+(ri6+1)*pcabH);
+      }
+      if(bD!==b0){
+        var dkD=dkColsP[bD%dkColsP.length];
+        doc.setDrawColor((dk[0]+dkD[0])/2,(dk[1]+dkD[1])/2,(dk[2]+dkD[2])/2);
+        doc.line(pgX+ci6*pcabW, pgY+(ri6+1)*pcabH, pgX+(ci6+1)*pcabW, pgY+(ri6+1)*pcabH);
+      }
+    }
+  }
+  doc.setDrawColor(80,80,80);doc.setLineWidth(0.4);
+  doc.rect(pgX,pgY,CW,pgH,'S');
+
+  // Branch badge at first cabinet of each branch
+  var firstOfBranch={};
+  var seq2=0;
+  for(var qcc=0;qcc<c.qW;qcc++){
+    if(qcc%2===0){
+      for(var qrr=0;qrr<c.qH;qrr++){ var bI=Math.floor(seq2/cabsPerBranch); if(firstOfBranch[bI]===undefined) firstOfBranch[bI]={c:qcc,r:qrr}; seq2++; }
+    }else{
+      for(var qrr2=c.qH-1;qrr2>=0;qrr2--){ var bI2=Math.floor(seq2/cabsPerBranch); if(firstOfBranch[bI2]===undefined) firstOfBranch[bI2]={c:qcc,r:qrr2}; seq2++; }
+    }
+  }
+  for(var bk=0;bk<nBranches;bk++){
+    var fb=firstOfBranch[bk]; if(!fb) continue;
+    var bcx=pgX+fb.c*pcabW+pcabW/2, bcy=pgY+fb.r*pcabH+pcabH/2;
+    var dkB=dkColsP[bk%dkColsP.length];
+    var rB=Math.min(2.8, pcabW/3.2, pcabH/3.2);
+    doc.setFillColor(dkB[0],dkB[1],dkB[2]);
+    doc.circle(bcx,bcy,rB,'F');
+    if(rB>=1.3){
+      doc.setFont('helvetica','bold');doc.setFontSize(rB*1.9);doc.setTextColor(255,255,255);
+      doc.text('B'+(bk+1),bcx,bcy+rB*0.4,{align:'center'});
+    }
+  }
+  y=pgY+pgH+5;
+
+  // ── Branch legend ────────────────────────────────────────────────────
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);
+  doc.text('Branch Circuits ('+nBranches+' x '+branchAmpere+'A MCB)',ML,y);
+  y+=3.5;
+  var legCols=Math.min(4, nBranches);
+  var legColW=CW/legCols;
+  var legRowH=8;
+  for(var lb=0;lb<nBranches;lb++){
+    var lcol=lb%legCols, lrow=Math.floor(lb/legCols);
+    var lx=ML+lcol*legColW, ly=y+lrow*legRowH;
+    var lDk=dkColsP[lb%dkColsP.length], lBg=bgColsP[lb%bgColsP.length];
+    doc.setFillColor(lBg[0],lBg[1],lBg[2]);doc.setDrawColor(lDk[0],lDk[1],lDk[2]);doc.setLineWidth(0.3);
+    doc.rect(lx,ly,5,5,'FD');
+    doc.setFillColor(lDk[0],lDk[1],lDk[2]);
+    doc.circle(lx+2.5,ly+2.5,1.2,'F');
+    var bCabs=(lb===nBranches-1)?lastBranchCabs:cabsPerBranch;
+    var bWatt=bCabs*p.maxW;
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);
+    doc.text('B'+(lb+1),lx+7,ly+2);
+    doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+    doc.text('MCB '+branchAmpere+'A | '+bCabs+' cab | '+fmtNum(bWatt)+' W',lx+7,ly+5);
+  }
+  y+=Math.ceil(nBranches/legCols)*legRowH+3;
+
 
   // ── Specification rows ────────────────────────────────────────────────
   y=secHeader(y,'Power Distribution Specification');
