@@ -998,9 +998,11 @@ async function exportDatasheetPDF(){
   var cabPxCount   = p.pxW * p.pxH;
   var pxPerPort    = 650000;
   var maxCabPerPort= Math.max(1, Math.floor(pxPerPort/cabPxCount));
+  var cabsPerPort  = maxCabPerPort;
   var totalCab     = c.qW * c.qH;
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
   var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
+  var routePatternLabel='Max '+maxCabPerPort+' cabinets/port, split by pixel limit';
 
   // Build port routes. Rule: every port must stay <= 650,000 px.
   // If one full column exceeds the limit (P1.2, 6-high cabinet), route the
@@ -1030,6 +1032,7 @@ async function exportDatasheetPDF(){
     }
   }else{
     var colsPerPort=Math.max(1, Math.floor(maxCabPerPort/c.qH));
+    routePatternLabel=colsPerPort+' full column(s) per port';
     for(var sc=0; sc<c.qW; sc+=colsPerPort){
       var route=[];
       for(var ci=sc; ci<Math.min(c.qW,sc+colsPerPort); ci++){
@@ -1067,7 +1070,7 @@ async function exportDatasheetPDF(){
   // Card region backgrounds (whole columns per card, contiguous)
   // For visual grouping: shade columns by the card of the FIRST cabinet entering each column
   for(var ci3=0; ci3<c.qW; ci3++){
-    var firstKey=ci3+','+(ci3%2===0?0:c.qH-1);
+    var firstKey=ci3+',0';
     var pIdx=portOfCab[firstKey]||0;
     var cardIdx=cardOfPort(pIdx);
     var bg=bgCols[cardIdx%bgCols.length];
@@ -1104,20 +1107,19 @@ async function exportDatasheetPDF(){
     var bx=x2-ux*ah*1.6, by=y2-uy*ah*1.6;
     doc.triangle(bx+px*ah*0.9,by+py*ah*0.9, bx-px*ah*0.9,by-py*ah*0.9, x2,y2,'F');
   }
-  for(var k=1;k<path.length;k++){
-    var a=path[k-1], b=path[k];
-    var pA=portOfCab[a.c+','+a.r], pB=portOfCab[b.c+','+b.r];
-    if(pA!==pB) continue; // gap between ports — no arrow
-    var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
-    var dk=dkCols[cardOfPort(pA)%dkCols.length];
-    drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
+  for(var pr=0;pr<portRoutes.length;pr++){
+    for(var k=1;k<portRoutes[pr].length;k++){
+      var a=portRoutes[pr][k-1], b=portRoutes[pr][k];
+      var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
+      var dk=dkCols[cardOfPort(pr)%dkCols.length];
+      drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
+    }
   }
 
   // Port marker (filled circle with "card-port") at the FIRST cabinet of each port
   for(var pi=0; pi<portsTotal; pi++){
-    var firstCabIdx=pi*cabsPerPort;
-    if(firstCabIdx>=path.length) break;
-    var fc=path[firstCabIdx];
+    var fc=portRoutes[pi]&&portRoutes[pi][0];
+    if(!fc) continue;
     var ctr=cellCenter(fc.c,fc.r);
     var dk2=dkCols[cardOfPort(pi)%dkCols.length];
     var r=Math.min(2.6, cabW/3.2, cabH/3.2);
