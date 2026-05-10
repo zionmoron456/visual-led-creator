@@ -1158,7 +1158,7 @@ async function exportDatasheetPDF(){
     var fc=portRoutes[pi]&&portRoutes[pi][0];
     if(!fc) continue;
     var ctr=cellCenter(fc.c,fc.r);
-    var dk2=dkCols[cardOfPort(pi)%dkCols.length];
+    var dk2=portColor(pi);
     var r=Math.min(2.6, cabW/3.2, cabH/3.2);
     doc.setFillColor(dk2[0],dk2[1],dk2[2]);
     doc.circle(ctr.x, ctr.y, r, 'F');
