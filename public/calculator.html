@@ -1140,19 +1140,18 @@ async function exportDatasheetPDF(){
     ['Total Sending Cards',nCards+' Unit'],
     ['Ports per Card (RJ45)',portsPerCard+' (Gigabit Ethernet)'],
     ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
-    ['Columns per Port',colsPerPort+' column(s) — endpoint column-aligned'],
     ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
-    ['Max Cabinets per Port',cabsPerPort+' cabinet (per 650,000 px budget)'],
+    ['Max Cabinets per Port',maxCabPerPort+' cabinet (actual '+fmtNum(maxCabPerPort*cabPxCount)+' px)'],
     ['Total Ports Used',portsTotal+' / '+(nCards*portsPerCard)],
     ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
     ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
-    ['Routing Pattern','Serpentine (snake) — top-left start, ↓↑↓↑']
+    ['Routing Pattern',routePatternLabel]
   ];
   dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
 
   y+=4;
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
-  doc.text('Note: Serpentine routing per NovaStar — each Gigabit RJ45 port chains cabinets along a snake path until pixel budget is reached.',ML,y);
+  doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
   drawFooter(5,5);
 
