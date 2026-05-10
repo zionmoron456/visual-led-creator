@@ -465,7 +465,10 @@ function autoSelectHSeries(){
   var sc16=hCards.output.filter(function(c){return c.key==='out_16xRJ45_2xF';})[0];
   var activeSC=prefer20&&sc20?sc20:(sc16||sc20);
   var ppc=prefer20&&sc20?20:16;
-  var outputSlotsNeeded=Math.max(1,Math.ceil(portsNeeded/ppc));
+  var cardMaxPx=(activeSC&&activeSC.maxPx)?activeSC.maxPx:8294400;
+  var slotsByPort=Math.ceil(portsNeeded/ppc);
+  var slotsByPx=totalPx>0?Math.ceil(totalPx/cardMaxPx):1;
+  var outputSlotsNeeded=Math.max(1,slotsByPort,slotsByPx);
   var reqRedundantPsu=document.getElementById('req-redundant-psu').checked;
   var redundantCard=hCards.extra.filter(function(c){return c.key==='redundant_psu';})[0];
   var extraItems=[];
