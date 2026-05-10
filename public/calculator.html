@@ -872,7 +872,7 @@ async function exportDatasheetPDF(){
     doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(0,0,0);doc.text(f[1],ML,y+8);
     y+=22;
   });
-  drawFooter(1,5);
+  drawFooter(1,6);
 
   // ── PAGE 2: LED Configuration Rendering ────────────────────────────────────
   doc.addPage();
@@ -911,7 +911,7 @@ async function exportDatasheetPDF(){
   y=solRow(y,'1','LED Display',p.model,c.total,'Pcs',false);
   y=solRow(y,'2','Mounting Device','Wall-mounted Bracket','/','SET',true);
   if(vpInfo) y=solRow(y,'3','Video Wall Processor',vpInfo.label,1,'PCS',false);
-  drawFooter(2,5);
+  drawFooter(2,6);
 
   // ── PAGE 3: Screen Specification ───────────────────────────────────────────
   doc.addPage();
@@ -945,7 +945,7 @@ async function exportDatasheetPDF(){
   y+=3;y=subHdr(y,'TKDN Information');
   y=specRow(y,'Status',p.tkdn,false);
   if(isTKDN&&tkdnMap[p.pitch]) y=specRow(y,'Nilai TKDN',tkdnMap[p.pitch],true);
-  drawFooter(3,5);
+  drawFooter(3,6);
 
   // ── PAGE 4: Cabinet Specification ──────────────────────────────────────────
   doc.addPage();
@@ -983,7 +983,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
   doc.text('Tanggal: '+quoDate,PW-MR-4,y+10,{align:'right'});
   doc.text('Datasheet MAXHUB '+p.model,PW-MR-4,y+15,{align:'right'});
-  drawFooter(4,5);
+  drawFooter(4,6);
 
   // ── PAGE 5: Data Flow Drawing ──────────────────────────────────────────────
   doc.addPage();
@@ -1190,7 +1190,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
   doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
-  drawFooter(5,5);
+  drawFooter(5,6);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
