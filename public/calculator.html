@@ -335,9 +335,9 @@ var hCards={
     {key:"in_4xVGA",label:"H_4x VGA Input Card",price:33279000,desc:"4x VGA input"}
   ],
   output:[
-    {key:"out_16xRJ45_2xF",label:"H_16x RJ45 + 2x Fiber Sending Card",price:67091000,desc:"16x RJ45 + 2x Fiber",portsOut:16},
-    {key:"out_20xRJ45",label:"H_20x RJ45 Sending Card",price:74652000,desc:"20x RJ45",portsOut:20},
-    {key:"out_2xRJ45_preview",label:"H_2x RJ45 + 1x HDMI MVR Card",price:49945000,desc:"MultiViewer Card",portsOut:2}
+    {key:"out_16xRJ45_2xF",label:"H_16x RJ45 + 2x Fiber Sending Card",price:67091000,desc:"16x RJ45 + 2x Fiber · max 4K (3840x2160) per card",portsOut:16,maxPx:8294400},
+    {key:"out_20xRJ45",label:"H_20x RJ45 Sending Card",price:74652000,desc:"20x RJ45 · max 4K (3840x2160) per card",portsOut:20,maxPx:8294400},
+    {key:"out_2xRJ45_preview",label:"H_2x RJ45 + 1x HDMI MVR Card",price:49945000,desc:"MultiViewer Card",portsOut:2,maxPx:8294400}
   ],
   extra:[
     {key:"redundant_psu",label:"Redundant Power 800W",price:8839000,desc:"Hot-swap redundant PSU"}
@@ -465,7 +465,10 @@ function autoSelectHSeries(){
   var sc16=hCards.output.filter(function(c){return c.key==='out_16xRJ45_2xF';})[0];
   var activeSC=prefer20&&sc20?sc20:(sc16||sc20);
   var ppc=prefer20&&sc20?20:16;
-  var outputSlotsNeeded=Math.max(1,Math.ceil(portsNeeded/ppc));
+  var cardMaxPx=(activeSC&&activeSC.maxPx)?activeSC.maxPx:8294400;
+  var slotsByPort=Math.ceil(portsNeeded/ppc);
+  var slotsByPx=totalPx>0?Math.ceil(totalPx/cardMaxPx):1;
+  var outputSlotsNeeded=Math.max(1,slotsByPort,slotsByPx);
   var reqRedundantPsu=document.getElementById('req-redundant-psu').checked;
   var redundantCard=hCards.extra.filter(function(c){return c.key==='redundant_psu';})[0];
   var extraItems=[];
