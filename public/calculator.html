@@ -997,30 +997,61 @@ async function exportDatasheetPDF(){
   // A new port begins when the per-port pixel budget (~650k px) is exhausted.
   var cabPxCount   = p.pxW * p.pxH;
   var pxPerPort    = 650000;
-  // Column-aligned routing (NovaStar/VNNOX convention): each port handles
-  // whole columns so its endpoint always lands on a row boundary aligned
-  // with the next port's start (or the next bend).
-  var colPxCount   = c.qH * cabPxCount;
-  var colsPerPort  = Math.max(1, Math.floor(pxPerPort/colPxCount));
-  var cabsPerPort  = colsPerPort * c.qH;
+  var maxCabPerPort= Math.max(1, Math.floor(pxPerPort/cabPxCount));
+  var cabsPerPort  = maxCabPerPort;
   var totalCab     = c.qW * c.qH;
-  var portsTotal   = Math.max(1, Math.ceil(c.qW/colsPerPort));
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
-  var nCards       = Math.max(1, Math.ceil(portsTotal/portsPerCard));
   var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
+  var routePatternLabel='Max '+maxCabPerPort+' cabinets/port, split by pixel limit';
 
-  // Build serpentine path: array of {col,row} in traversal order
-  var path=[];
-  for(var ci=0; ci<c.qW; ci++){
-    if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) path.push({c:ci,r:ri}); }
-    else        { for(var ri2=c.qH-1; ri2>=0; ri2--) path.push({c:ci,r:ri2}); }
+  // Build port routes. Rule: every port must stay <= 650,000 px.
+  // If one full column exceeds the limit (P1.2, 6-high cabinet), route the
+  // maximum safe vertical run first, then group the remaining row(s)
+  // horizontally in chunks that also stay within the same pixel limit.
+  var portRoutes=[];
+  function addRoute(cells){ if(cells&&cells.length) portRoutes.push(cells); }
+  if(c.qH>maxCabPerPort){
+    var mainRows=maxCabPerPort;
+    var remRows=c.qH-mainRows;
+    function portsNeededForCols(n){ return n + Math.ceil((n*remRows)/maxCabPerPort); }
+    var startCol=0;
+    while(startCol<c.qW){
+      var segCols=1;
+      while(startCol+segCols<c.qW && portsNeededForCols(segCols+1)<=portsPerCard) segCols++;
+      for(var vc=0; vc<segCols; vc++){
+        var col=startCol+vc, vCells=[];
+        for(var vr=0; vr<mainRows; vr++) vCells.push({c:col,r:vr});
+        addRoute(vCells);
+      }
+      var leftovers=[];
+      for(var rr=mainRows; rr<c.qH; rr++){
+        for(var hc=0; hc<segCols; hc++) leftovers.push({c:startCol+hc,r:rr});
+      }
+      for(var li=0; li<leftovers.length; li+=maxCabPerPort) addRoute(leftovers.slice(li,li+maxCabPerPort));
+      startCol+=segCols;
+    }
+  }else{
+    var colsPerPort=Math.max(1, Math.floor(maxCabPerPort/c.qH));
+    routePatternLabel=colsPerPort+' full column(s) per port';
+    for(var sc=0; sc<c.qW; sc+=colsPerPort){
+      var route=[];
+      for(var ci=sc; ci<Math.min(c.qW,sc+colsPerPort); ci++){
+        if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri}); }
+        else        { for(var ri2=c.qH-1; ri2>=0; ri2--) route.push({c:ci,r:ri2}); }
+      }
+      addRoute(route);
+    }
   }
+  var portsTotal=portRoutes.length;
+  var nCards=Math.max(1,Math.ceil(portsTotal/portsPerCard));
   // Assign each cabinet a port index (0-based) and per-cabinet position within port
   var portOfCab={}, posInPort={};
-  for(var i=0;i<path.length;i++){
-    var portIdx=Math.min(portsTotal-1, Math.floor(i/cabsPerPort));
-    portOfCab[path[i].c+','+path[i].r]=portIdx;
-    posInPort[path[i].c+','+path[i].r]=i - portIdx*cabsPerPort;
+  for(var piAssign=0;piAssign<portRoutes.length;piAssign++){
+    for(var riAssign=0;riAssign<portRoutes[piAssign].length;riAssign++){
+      var cell=portRoutes[piAssign][riAssign];
+      portOfCab[cell.c+','+cell.r]=piAssign;
+      posInPort[cell.c+','+cell.r]=riAssign;
+    }
   }
   function cardOfPort(pi){ return Math.min(nCards-1, Math.floor(pi/portsPerCard)); }
   function portInCard(pi){ return pi - cardOfPort(pi)*portsPerCard + 1; }
@@ -1039,7 +1070,7 @@ async function exportDatasheetPDF(){
   // Card region backgrounds (whole columns per card, contiguous)
   // For visual grouping: shade columns by the card of the FIRST cabinet entering each column
   for(var ci3=0; ci3<c.qW; ci3++){
-    var firstKey=ci3+','+(ci3%2===0?0:c.qH-1);
+    var firstKey=ci3+',0';
     var pIdx=portOfCab[firstKey]||0;
     var cardIdx=cardOfPort(pIdx);
     var bg=bgCols[cardIdx%bgCols.length];
@@ -1076,20 +1107,19 @@ async function exportDatasheetPDF(){
     var bx=x2-ux*ah*1.6, by=y2-uy*ah*1.6;
     doc.triangle(bx+px*ah*0.9,by+py*ah*0.9, bx-px*ah*0.9,by-py*ah*0.9, x2,y2,'F');
   }
-  for(var k=1;k<path.length;k++){
-    var a=path[k-1], b=path[k];
-    var pA=portOfCab[a.c+','+a.r], pB=portOfCab[b.c+','+b.r];
-    if(pA!==pB) continue; // gap between ports — no arrow
-    var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
-    var dk=dkCols[cardOfPort(pA)%dkCols.length];
-    drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
+  for(var pr=0;pr<portRoutes.length;pr++){
+    for(var k=1;k<portRoutes[pr].length;k++){
+      var a=portRoutes[pr][k-1], b=portRoutes[pr][k];
+      var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
+      var dk=dkCols[cardOfPort(pr)%dkCols.length];
+      drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
+    }
   }
 
   // Port marker (filled circle with "card-port") at the FIRST cabinet of each port
   for(var pi=0; pi<portsTotal; pi++){
-    var firstCabIdx=pi*cabsPerPort;
-    if(firstCabIdx>=path.length) break;
-    var fc=path[firstCabIdx];
+    var fc=portRoutes[pi]&&portRoutes[pi][0];
+    if(!fc) continue;
     var ctr=cellCenter(fc.c,fc.r);
     var dk2=dkCols[cardOfPort(pi)%dkCols.length];
     var r=Math.min(2.6, cabW/3.2, cabH/3.2);
@@ -1110,19 +1140,18 @@ async function exportDatasheetPDF(){
     ['Total Sending Cards',nCards+' Unit'],
     ['Ports per Card (RJ45)',portsPerCard+' (Gigabit Ethernet)'],
     ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
-    ['Columns per Port',colsPerPort+' column(s) — endpoint column-aligned'],
     ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
-    ['Max Cabinets per Port',cabsPerPort+' cabinet (per 650,000 px budget)'],
+    ['Max Cabinets per Port',maxCabPerPort+' cabinet (actual '+fmtNum(maxCabPerPort*cabPxCount)+' px)'],
     ['Total Ports Used',portsTotal+' / '+(nCards*portsPerCard)],
     ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
     ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
-    ['Routing Pattern','Serpentine (snake) — top-left start, ↓↑↓↑']
+    ['Routing Pattern',routePatternLabel]
   ];
   dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
 
   y+=4;
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
-  doc.text('Note: Serpentine routing per NovaStar — each Gigabit RJ45 port chains cabinets along a snake path until pixel budget is reached.',ML,y);
+  doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
   drawFooter(5,5);
 
