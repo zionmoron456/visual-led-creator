@@ -1109,7 +1109,7 @@ async function exportDatasheetPDF(){
     ['Ports per Card (RJ45)',portsPerCard+' (Gigabit Ethernet)'],
     ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
     ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
-    ['Max Cabinets per Port',cabsPerPort+' cabinet (budget '+cabsByBudget+', column-aligned)'],
+    ['Max Cabinets per Port',cabsPerPort+' cabinet (per 650,000 px budget)'],
     ['Total Ports Used',portsTotal+' / '+(nCards*portsPerCard)],
     ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
     ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
