@@ -1091,15 +1091,17 @@ async function exportDatasheetPDF(){
   var bgCols=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[250,220,232],[222,242,242],[244,238,210],[226,224,244],[244,228,222],[218,236,232],[244,224,240]];
   var dkCols=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[210,70,140],[40,150,150],[180,150,40],[90,90,200],[200,90,60],[40,140,120],[200,80,170]];
 
-  // Card region backgrounds (whole columns per card, contiguous)
-  // For visual grouping: shade columns by the card of the FIRST cabinet entering each column
+  // Card region backgrounds — shade EACH CABINET by its actual card.
+  // (Per-column shading is wrong when a card's leftover/horizontal ports
+  // cover bottom-row cabinets that lie under another card's vertical columns.)
   for(var ci3=0; ci3<c.qW; ci3++){
-    var firstKey=ci3+',0';
-    var pIdx=portOfCab[firstKey]||0;
-    var cardIdx=cardOfPort(pIdx);
-    var bg=bgCols[cardIdx%bgCols.length];
-    doc.setFillColor(bg[0],bg[1],bg[2]);
-    doc.rect(gX+ci3*cabW, gY, cabW, gH, 'F');
+    for(var ri3a=0; ri3a<c.qH; ri3a++){
+      var pIdxA=portOfCab[ci3+','+ri3a]||0;
+      var cardIdxA=cardOfPort(pIdxA);
+      var bgA=bgCols[cardIdxA%bgCols.length];
+      doc.setFillColor(bgA[0],bgA[1],bgA[2]);
+      doc.rect(gX+ci3*cabW, gY+ri3a*cabH, cabW, cabH, 'F');
+    }
   }
 
   // Cabinet cells with labels
