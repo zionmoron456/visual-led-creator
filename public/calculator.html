@@ -1133,11 +1133,22 @@ async function exportDatasheetPDF(){
     var bx=x2-ux*ah*1.6, by=y2-uy*ah*1.6;
     doc.triangle(bx+px*ah*0.9,by+py*ah*0.9, bx-px*ah*0.9,by-py*ah*0.9, x2,y2,'F');
   }
+  function hsl2rgb(h,s,l){
+    var c=(1-Math.abs(2*l-1))*s, hp=h/60, x=c*(1-Math.abs(hp%2-1)), m=l-c/2;
+    var r=0,g=0,b=0;
+    if(hp<1){r=c;g=x;}else if(hp<2){r=x;g=c;}else if(hp<3){g=c;b=x;}
+    else if(hp<4){g=x;b=c;}else if(hp<5){r=x;b=c;}else{r=c;b=x;}
+    return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
+  }
+  function portColor(pi){
+    var hue=(pi*137.508)%360;
+    return hsl2rgb(hue,0.75,0.42);
+  }
   for(var pr=0;pr<portRoutes.length;pr++){
     for(var k=1;k<portRoutes[pr].length;k++){
       var a=portRoutes[pr][k-1], b=portRoutes[pr][k];
       var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
-      var dk=dkCols[cardOfPort(pr)%dkCols.length];
+      var dk=portColor(pr);
       drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
     }
   }
