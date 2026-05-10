@@ -1003,8 +1003,14 @@ async function exportDatasheetPDF(){
   var maxCabPerPort= Math.max(1, Math.floor(pxPerPort/cabPxCount));
   var cabsPerPort  = maxCabPerPort;
   var totalCab     = c.qW * c.qH;
-  var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
-  var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
+  // H Series sending card port count: 20 if user prefers 20xRJ45, else 16.
+  // Non-H-Series fallback uses chassis ports (vpPorts) or 16.
+  var prefer20El=document.getElementById('pref-20rj45');
+  var isHSeries=(vpInfo&&vpInfo.hSeries)||(c.vpKey&&/^H/.test(c.vpKey));
+  var portsPerCard = isHSeries ? (prefer20El&&prefer20El.checked?20:16)
+                               : ((c.vpPorts && c.vpPorts>0) ? c.vpPorts : 16);
+  var cardLabel    = isHSeries ? ((prefer20El&&prefer20El.checked)?'H_20x RJ45 Sending Card':'H_16x RJ45 + 2x Fiber Sending Card')
+                               : ((vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card');
   var routePatternLabel='Max '+maxCabPerPort+' cabinets/port, split by pixel limit';
 
   // Build port routes. Rule: every port must stay <= 650,000 px.
