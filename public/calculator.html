@@ -1073,8 +1073,12 @@ async function exportDatasheetPDF(){
       posInPort[cell.c+','+cell.r]=riAssign;
     }
   }
-  function cardOfPort(pi){ return Math.min(nCards-1, Math.floor(pi/portsPerCard)); }
-  function portInCard(pi){ return pi - cardOfPort(pi)*portsPerCard + 1; }
+  function cardOfPort(pi){ return Math.min(nCards-1, cardOfPortArr[pi]||0); }
+  function portInCard(pi){
+    var ci=cardOfPort(pi), n=0;
+    for(var k=0;k<=pi;k++) if(cardOfPort(k)===ci) n++;
+    return n;
+  }
 
   // ── Layout ────────────────────────────────────────────────────────────────
   var gX=ML, gY=y;
