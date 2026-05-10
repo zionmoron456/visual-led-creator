@@ -1373,7 +1373,7 @@ async function exportDatasheetPDF(){
     doc.rect(lx,ly,5,5,'FD');
     doc.setFillColor(lDk[0],lDk[1],lDk[2]);
     doc.circle(lx+2.5,ly+2.5,1.2,'F');
-    var bCabs=(lb===nBranches-1)?lastBranchCabs:cabsPerBranch;
+    var bCabs=branchSizes[lb];
     var bWatt=bCabs*p.maxW;
     doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);
     doc.text('B'+(lb+1),lx+7,ly+2);
