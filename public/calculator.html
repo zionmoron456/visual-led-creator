@@ -1256,12 +1256,12 @@ async function exportDatasheetPDF(){
   y=topY+boxH+5;
 
   // ── Cabinet grid grouped by power branch ─────────────────────────────
-  // Build column-serpentine sequence, then split into branches by branchSizes
-  // (even distribution). Each branch becomes a cable loop drawn with arrows.
+  // Build a uniform TOP→BOTTOM column sequence (no zig-zag) so every branch
+  // starts as close to the TOP as possible — titik awal power sejajar di sisi
+  // atas. Each branch becomes a cable loop drawn with arrows.
   var seqOrder=[];
   for(var pcc=0;pcc<c.qW;pcc++){
-    if(pcc%2===0){ for(var prr=0;prr<c.qH;prr++) seqOrder.push({c:pcc,r:prr}); }
-    else        { for(var prr2=c.qH-1;prr2>=0;prr2--) seqOrder.push({c:pcc,r:prr2}); }
+    for(var prr=0;prr<c.qH;prr++) seqOrder.push({c:pcc,r:prr});
   }
   var branchRoutes=[], branchOfCab={}, posInBranch={}, idx=0;
   for(var bs2=0;bs2<nBranches;bs2++){
