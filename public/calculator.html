@@ -988,23 +988,36 @@ async function exportDatasheetPDF(){
   doc.text('Sending Card & Cabinet Data Flow Diagram',ML+4,y+6.8);
   y+=14;
 
-  // ── NovaStar / VNNOX logic ───────────────────────────────────────────────
-  // Per VNNOX schemeConf: each Gigabit RJ45 port = ONE column (top→bottom).
-  // Pixel budget per port ≈ 650,000 px. If a column exceeds the budget, it is
-  // split into multiple vertical segments (still top→bottom, never serpentine).
-  var cabPxCount = p.pxW * p.pxH;
-  var pxPerPort  = 650000;
-  var cabsPerPortMax = Math.max(1, Math.floor(pxPerPort/cabPxCount));
-  var segsPerCol = Math.max(1, Math.ceil(c.qH/cabsPerPortMax));   // vertical segments per column
-  var cabsPerSeg = Math.ceil(c.qH/segsPerCol);                    // cabinets per port segment
-  var portsTotal = c.qW * segsPerCol;                              // total RJ45 ports used
+  // ── NovaStar serpentine routing ─────────────────────────────────────────
+  // Each Gigabit RJ45 port handles a contiguous chunk of cabinets along a
+  // serpentine (snake) path starting top-left: col0 ↓, col1 ↑, col2 ↓, …
+  // A new port begins when the per-port pixel budget (~650k px) is exhausted.
+  var cabPxCount   = p.pxW * p.pxH;
+  var pxPerPort    = 650000;
+  var cabsPerPort  = Math.max(1, Math.floor(pxPerPort/cabPxCount));
+  var totalCab     = c.qW * c.qH;
+  var portsTotal   = Math.max(1, Math.ceil(totalCab/cabsPerPort));
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
-  var nCards = Math.max(1, Math.ceil(portsTotal/portsPerCard));
-  var cardLabel = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
-  var portsPerCardActual = Math.ceil(portsTotal/nCards);
-  var colsPerCard = Math.max(1, Math.ceil(c.qW/nCards));            // group whole columns per card
+  var nCards       = Math.max(1, Math.ceil(portsTotal/portsPerCard));
+  var cardLabel    = (vpInfo && vpInfo.label) ? vpInfo.label : 'Sending Card';
 
-  // ── Layout grid ──────────────────────────────────────────────────────────
+  // Build serpentine path: array of {col,row} in traversal order
+  var path=[];
+  for(var ci=0; ci<c.qW; ci++){
+    if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) path.push({c:ci,r:ri}); }
+    else        { for(var ri2=c.qH-1; ri2>=0; ri2--) path.push({c:ci,r:ri2}); }
+  }
+  // Assign each cabinet a port index (0-based) and per-cabinet position within port
+  var portOfCab={}, posInPort={};
+  for(var i=0;i<path.length;i++){
+    var portIdx=Math.min(portsTotal-1, Math.floor(i/cabsPerPort));
+    portOfCab[path[i].c+','+path[i].r]=portIdx;
+    posInPort[path[i].c+','+path[i].r]=i - portIdx*cabsPerPort;
+  }
+  function cardOfPort(pi){ return Math.min(nCards-1, Math.floor(pi/portsPerCard)); }
+  function portInCard(pi){ return pi - cardOfPort(pi)*portsPerCard + 1; }
+
+  // ── Layout ────────────────────────────────────────────────────────────────
   var gX=ML, gY=y;
   var gW=CW;
   var cabW=gW/c.qW;
@@ -1012,67 +1025,71 @@ async function exportDatasheetPDF(){
   if(cabH<6) cabH=6;
   var gH=cabH*c.qH;
 
-  var bgCols=[[214,242,222],[214,230,250],[250,228,214],[238,222,250]];
-  var dkCols=[[34,160,90],[40,100,200],[210,120,40],[140,60,180]];
+  var bgCols=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[245,220,235]];
+  var dkCols=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[200,70,140]];
 
-  // Determine card index for a given column (whole columns belong to one card)
-  function cardOf(col){ return Math.min(nCards-1, Math.floor(col/colsPerCard)); }
-
-  // Card region backgrounds
-  for(var card=0; card<nCards; card++){
-    var sCol=card*colsPerCard;
-    var eCol=Math.min(c.qW, sCol+colsPerCard);
-    if(eCol<=sCol) continue;
-    var bg=bgCols[card%4];
+  // Card region backgrounds (whole columns per card, contiguous)
+  // For visual grouping: shade columns by the card of the FIRST cabinet entering each column
+  for(var ci3=0; ci3<c.qW; ci3++){
+    var firstKey=ci3+','+(ci3%2===0?0:c.qH-1);
+    var pIdx=portOfCab[firstKey]||0;
+    var cardIdx=cardOfPort(pIdx);
+    var bg=bgCols[cardIdx%bgCols.length];
     doc.setFillColor(bg[0],bg[1],bg[2]);
-    doc.rect(gX+sCol*cabW, gY, (eCol-sCol)*cabW, gH, 'F');
+    doc.rect(gX+ci3*cabW, gY, cabW, gH, 'F');
   }
 
-  // Cabinet cells
-  for(var ci=0; ci<c.qW; ci++){
-    var cardIdx=cardOf(ci);
-    for(var ri=0; ri<c.qH; ri++){
-      var cx=gX+ci*cabW, cy=gY+ri*cabH;
+  // Cabinet cells with labels
+  for(var ci4=0; ci4<c.qW; ci4++){
+    for(var ri3=0; ri3<c.qH; ri3++){
+      var cx=gX+ci4*cabW, cy=gY+ri3*cabH;
       doc.setDrawColor(160,160,160);doc.setLineWidth(0.1);
       doc.rect(cx,cy,cabW,cabH,'S');
+      var pIdx2=portOfCab[ci4+','+ri3]||0;
+      var cardIdx2=cardOfPort(pIdx2);
       if(cabW>=10 && cabH>=10){
-        doc.setFont('helvetica','normal');doc.setFontSize(3.8);doc.setTextColor(60,60,60);
-        doc.text(cardLabel+'-'+(cardIdx+1), cx+0.6, cy+1.8);
+        doc.setFont('helvetica','normal');doc.setFontSize(3.6);doc.setTextColor(60,60,60);
+        doc.text(cardLabel+'-'+(cardIdx2+1), cx+0.6, cy+1.8);
         doc.text('W: '+p.pxW, cx+0.6, cy+3.8);
         doc.text('H: '+p.pxH, cx+0.6, cy+5.8);
       }
     }
   }
 
-  // Draw straight top→bottom arrows + port markers (one per column-segment)
-  for(var ci2=0; ci2<c.qW; ci2++){
-    var cardIdx2=cardOf(ci2);
-    var dk=dkCols[cardIdx2%4];
-    // global port number within this card
-    var portInCardBase=0;
-    for(var prevCol=cardIdx2*colsPerCard; prevCol<ci2; prevCol++) portInCardBase+=segsPerCol;
-    for(var seg=0; seg<segsPerCol; seg++){
-      var rStart=seg*cabsPerSeg;
-      var rEnd=Math.min(c.qH, rStart+cabsPerSeg);
-      if(rStart>=rEnd) continue;
-      var portNum=portInCardBase+seg+1;
-      var xMid=gX+ci2*cabW+cabW/2;
-      var yTop=gY+rStart*cabH+cabH/2;
-      var yBot=gY+(rEnd-1)*cabH+cabH/2;
-      // arrow line
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.5);
-      if(yBot>yTop) doc.line(xMid,yTop,xMid,yBot);
-      // arrow head (small triangle at bottom)
-      doc.setFillColor(dk[0],dk[1],dk[2]);
-      var ah=Math.min(1.6,cabH*0.18);
-      doc.triangle(xMid-ah, yBot-ah*1.2, xMid+ah, yBot-ah*1.2, xMid, yBot+ah*0.4,'F');
-      // port marker at top
-      var r=Math.min(2.4, cabW/4, cabH/4);
-      doc.circle(xMid, yTop, r, 'F');
-      if(r>=1.5){
-        doc.setFont('helvetica','bold');doc.setFontSize(r*2.0);doc.setTextColor(255,255,255);
-        doc.text((cardIdx2+1)+'-'+portNum, xMid, yTop+r*0.4, {align:'center'});
-      }
+  // Draw serpentine arrows between consecutive cabinets of the SAME port
+  function cellCenter(cc,rr){ return {x:gX+cc*cabW+cabW/2, y:gY+rr*cabH+cabH/2}; }
+  function drawArrow(x1,y1,x2,y2,col){
+    doc.setDrawColor(col[0],col[1],col[2]);doc.setLineWidth(0.5);
+    doc.line(x1,y1,x2,y2);
+    doc.setFillColor(col[0],col[1],col[2]);
+    var ah=Math.min(1.5, Math.max(0.6, Math.min(cabW,cabH)*0.18));
+    var dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy)||1;
+    var ux=dx/len, uy=dy/len, px=-uy, py=ux;
+    var bx=x2-ux*ah*1.6, by=y2-uy*ah*1.6;
+    doc.triangle(bx+px*ah*0.9,by+py*ah*0.9, bx-px*ah*0.9,by-py*ah*0.9, x2,y2,'F');
+  }
+  for(var k=1;k<path.length;k++){
+    var a=path[k-1], b=path[k];
+    var pA=portOfCab[a.c+','+a.r], pB=portOfCab[b.c+','+b.r];
+    if(pA!==pB) continue; // gap between ports — no arrow
+    var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
+    var dk=dkCols[cardOfPort(pA)%dkCols.length];
+    drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
+  }
+
+  // Port marker (filled circle with "card-port") at the FIRST cabinet of each port
+  for(var pi=0; pi<portsTotal; pi++){
+    var firstCabIdx=pi*cabsPerPort;
+    if(firstCabIdx>=path.length) break;
+    var fc=path[firstCabIdx];
+    var ctr=cellCenter(fc.c,fc.r);
+    var dk2=dkCols[cardOfPort(pi)%dkCols.length];
+    var r=Math.min(2.6, cabW/3.2, cabH/3.2);
+    doc.setFillColor(dk2[0],dk2[1],dk2[2]);
+    doc.circle(ctr.x, ctr.y, r, 'F');
+    if(r>=1.3){
+      doc.setFont('helvetica','bold');doc.setFontSize(r*1.9);doc.setTextColor(255,255,255);
+      doc.text((cardOfPort(pi)+1)+'-'+portInCard(pi), ctr.x, ctr.y+r*0.4, {align:'center'});
     }
   }
   y=gY+gH+6;
@@ -1080,25 +1097,23 @@ async function exportDatasheetPDF(){
   // ── Configuration summary ────────────────────────────────────────────────
   y=subHdr(y,'Sending Card Configuration');
   var altr=false;
-  var totalCab=c.qW*c.qH;
   var dfRows=[
     ['Sending Card / Processor',cardLabel],
     ['Total Sending Cards',nCards+' Unit'],
     ['Ports per Card (RJ45)',portsPerCard+' (Gigabit Ethernet)'],
     ['Pixel Capacity per Port','~650,000 px (Gigabit limit)'],
     ['Cabinet Resolution',p.pxW+' x '+p.pxH+' = '+fmtNum(cabPxCount)+' px/cabinet'],
-    ['Max Cabinets per Port',cabsPerPortMax+' cabinet (by pixel budget)'],
-    ['Cabinets per Port (used)',cabsPerSeg+' cabinet'],
+    ['Max Cabinets per Port',cabsPerPort+' cabinet (by pixel budget)'],
     ['Total Ports Used',portsTotal+' / '+(nCards*portsPerCard)],
     ['Total Cabinets',totalCab+' ('+c.qW+' W x '+c.qH+' H)'],
     ['Total Resolution',(c.qW*p.pxW)+' x '+(c.qH*p.pxH)+' = '+fmtNum(c.qW*p.pxW*c.qH*p.pxH)+' px'],
-    ['Routing Pattern','Column-based, top → bottom (per VNNOX)']
+    ['Routing Pattern','Serpentine (snake) — top-left start, ↓↑↓↑']
   ];
   dfRows.forEach(function(r){y=specRow(y,r[0],r[1],altr);altr=!altr;});
 
   y+=4;
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
-  doc.text('Note: Each Gigabit RJ45 port drives one column of cabinets top→bottom (NovaStar VNNOX scheme).',ML,y);
+  doc.text('Note: Serpentine routing per NovaStar — each Gigabit RJ45 port chains cabinets along a snake path until pixel budget is reached.',ML,y);
 
   drawFooter(5,5);
 
