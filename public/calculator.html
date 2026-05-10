@@ -994,17 +994,10 @@ async function exportDatasheetPDF(){
   // A new port begins when the per-port pixel budget (~650k px) is exhausted.
   var cabPxCount   = p.pxW * p.pxH;
   var pxPerPort    = 650000;
-  var cabsByBudget = Math.max(1, Math.floor(pxPerPort/cabPxCount));
-  // Align port boundaries with column boundaries so turns happen at corners
-  // (NovaStar rule: turn endpoint must align with the bend/start of next port).
-  var cabsPerPort;
-  if (cabsByBudget >= c.qH) {
-    cabsPerPort = c.qH * Math.floor(cabsByBudget / c.qH); // whole columns
-  } else {
-    // Fewer than one column per port: split column into equal vertical chunks
-    var chunks = Math.ceil(c.qH / cabsByBudget);
-    cabsPerPort = Math.ceil(c.qH / chunks);
-  }
+  // Use full per-port pixel budget. Because cabinets flow on a continuous
+  // serpentine path, each port's endpoint is automatically the start (bend)
+  // of the next port — endpoints always align with the next port's start.
+  var cabsPerPort  = Math.max(1, Math.floor(pxPerPort/cabPxCount));
   var totalCab     = c.qW * c.qH;
   var portsTotal   = Math.max(1, Math.ceil(totalCab/cabsPerPort));
   var portsPerCard = (c.vpPorts && c.vpPorts>0) ? c.vpPorts : 4;
