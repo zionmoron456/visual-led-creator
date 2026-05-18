@@ -872,9 +872,87 @@ async function exportDatasheetPDF(){
     doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(0,0,0);doc.text(f[1],ML,y+8);
     y+=22;
   });
-  drawFooter(1,6);
+  drawFooter(1,7);
 
-  // ── PAGE 2: LED Configuration Rendering ────────────────────────────────────
+  // ── PAGE 2: Product Features ──────────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Product Features');
+  y=MT+4;
+  // Brand bar
+  doc.setFillColor(0,86,179);doc.rect(ML,y,CW,11,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);
+  doc.text('MAXHUB '+p.model,ML+4,y+7.4);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+  doc.text(p.env.toUpperCase()+' LED VIDEOTRON  ·  PIXEL PITCH '+p.pitch.replace('P','')+' mm',PW-MR-4,y+7.4,{align:'right'});
+  y+=14;
+  // Tagline
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(0,0,0);
+  var tagline=p.env==='Outdoor'
+    ? 'Ultra-Bright & Weather-Proof Outdoor LED Display Solution'
+    : 'High-Refresh, Seamless & Vivid Indoor LED Display Solution';
+  doc.text(tagline,PW/2,y+5,{align:'center'});
+  y+=10;
+  // Product photo
+  function productPhotoFor(model){
+    if(/^CN27/.test(model)) return '/products/CN27.jpg';
+    if(/^EF27/.test(model)) return '/products/EF27.jpg';
+    if(/^VT-808/.test(model)) return '/products/VT808.jpg';
+    if(/^GH31/.test(model)) return '/products/GH31.jpg';
+    if(/^GV27/.test(model)) return '/products/GV27.jpg';
+    return '/products/Outdoor.jpg';
+  }
+  async function loadImgDataURL(url){
+    try{
+      var r=await fetch(url);if(!r.ok) return null;
+      var b=await r.blob();
+      return await new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=rej;fr.readAsDataURL(b);});
+    }catch(e){return null;}
+  }
+  try{
+    var photo=await loadImgDataURL(productPhotoFor(p.model));
+    if(photo){
+      var phW=130, phH=46;
+      doc.addImage(photo,'JPEG',ML+(CW-phW)/2,y,phW,phH);
+      y+=phH+4;
+    }
+  }catch(e){ y+=4; }
+  // Features grid 2 x 3
+  doc.setFillColor(0,86,179);doc.rect(ML,y,CW,7,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(255,255,255);
+  doc.text('PRODUCT FEATURES',ML+3,y+4.8);
+  y+=9;
+  var feats=p.env==='Outdoor'?[
+    {t:'Weather-Proof Design',s:'Fully-enclosed cabinet IP65 front & rear, tahan hujan, debu & UV. Cocok untuk operasi 24/7 outdoor di iklim tropis.'},
+    {t:'Ultra-Bright Display',s:'Kecerahan hingga '+p.brightness+' cd/m² dengan contrast '+p.contrast+' — gambar tetap tajam di bawah sinar matahari langsung.'},
+    {t:'Energy Efficient',s:'Branch-circuit power supply dengan teknologi konversi tegangan efisiensi tinggi, menekan konsumsi daya & panas berlebih.'},
+    {t:'Robust & Lightweight',s:'Kabinet aluminium die-casting '+p.weight+' kg, struktur ringan namun kuat — hemat biaya rangka baja dan ruang instalasi.'},
+    {t:'Smart Remote Control',s:'MaxConfig software + monitoring real-time via PC/Tablet/HP. Publish konten & fault-alarm jarak jauh dengan aman.'},
+    {t:'Certified Quality',s:'Sertifikasi CE, FCC, RoHS & '+(p.tkdn==='TKDN'?'TKDN '+(tkdnMap[p.pitch]||'')+' (Produk Dalam Negeri)':'standar internasional')+' — komponen bebas timbal.'}
+  ]:[
+    {t:'Ultra-High Refresh Rate',s:'Refresh rate '+p.refresh+' Hz dengan color depth 16-bit — bebas flicker, ideal untuk kamera broadcast & live streaming.'},
+    {t:'Vivid & Accurate Color',s:'Brightness '+p.brightness+' cd/m² · contrast '+p.contrast+' · wide color gamut untuk reproduksi warna presisi & cinematic.'},
+    {t:'Seamless Fine-Pitch',s:'Pixel pitch '+p.pitch.replace('P','')+' mm dengan '+p.ledType+' — gambar mulus tanpa garis tepi, sudut pandang lebar 160°.'},
+    {t:'Slim & Lightweight',s:'Kabinet die-casting aluminium '+p.weight+' kg, ketebalan tipis 31 mm — mudah dipasang flush ke dinding & hemat ruang.'},
+    {t:'Front-Access Maintenance',s:'Modul, power supply & receiving card 100% front-access — perawatan & penggantian cepat tanpa membongkar struktur.'},
+    {t:'Smart Control System',s:'MaxConfig software dengan one-button-on + remote monitoring via PC/Mobile/Tablet. '+(p.tkdn==='TKDN'?'TKDN-certified '+(tkdnMap[p.pitch]||'')+'.':'CE / FCC / RoHS certified.')}
+  ];
+  var fCols=2, fColW=(CW-4)/fCols, fH=32;
+  for(var fi=0;fi<feats.length;fi++){
+    var fc=fi%fCols, fr=Math.floor(fi/fCols);
+    var fx=ML+fc*(fColW+4), fy2=y+fr*(fH+4);
+    doc.setFillColor(245,248,253);doc.setDrawColor(0,86,179);doc.setLineWidth(0.4);
+    doc.rect(fx,fy2,fColW,fH,'FD');
+    // accent bar
+    doc.setFillColor(0,86,179);doc.rect(fx,fy2,1.6,fH,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,86,179);
+    doc.text(feats[fi].t,fx+4,fy2+5.5);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(60,60,60);
+    var fl=doc.splitTextToSize(feats[fi].s,fColW-6);
+    doc.text(fl,fx+4,fy2+10);
+  }
+  drawFooter(2,7);
+
+  // ── PAGE 3: LED Configuration Rendering ───────────────────────────────────
   doc.addPage();
   drawHeader('LED Configuration Rendering');
   y=MT+6;
@@ -911,7 +989,7 @@ async function exportDatasheetPDF(){
   y=solRow(y,'1','LED Display',p.model,c.total,'Pcs',false);
   y=solRow(y,'2','Mounting Device','Wall-mounted Bracket','/','SET',true);
   if(vpInfo) y=solRow(y,'3','Video Wall Processor',vpInfo.label,1,'PCS',false);
-  drawFooter(2,6);
+  drawFooter(3,7);
 
   // ── PAGE 3: Screen Specification ───────────────────────────────────────────
   doc.addPage();
@@ -945,7 +1023,7 @@ async function exportDatasheetPDF(){
   y+=3;y=subHdr(y,'TKDN Information');
   y=specRow(y,'Status',p.tkdn,false);
   if(isTKDN&&tkdnMap[p.pitch]) y=specRow(y,'Nilai TKDN',tkdnMap[p.pitch],true);
-  drawFooter(3,6);
+  drawFooter(4,7);
 
   // ── PAGE 4: Cabinet Specification ──────────────────────────────────────────
   doc.addPage();
@@ -983,7 +1061,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
   doc.text('Tanggal: '+quoDate,PW-MR-4,y+10,{align:'right'});
   doc.text('Datasheet MAXHUB '+p.model,PW-MR-4,y+15,{align:'right'});
-  drawFooter(4,6);
+  drawFooter(5,7);
 
   // ── PAGE 5: Data Flow Drawing ──────────────────────────────────────────────
   doc.addPage();
@@ -1190,7 +1268,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
   doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
-  drawFooter(5,6);
+  drawFooter(6,7);
 
   // ── PAGE 6: Power Flow Drawing ─────────────────────────────────────────────
   doc.addPage();
@@ -1221,10 +1299,10 @@ async function exportDatasheetPDF(){
   var mainAreq=totalRecW/voltAC/0.8;
   var mcbStd=[10,16,20,25,32,40,50,63,80,100,125,160,200,250];
   var mainMCB=mcbStd.find(function(a){return a>=mainAreq;})||Math.ceil(mainAreq/10)*10;
-  // Phase suggestion: if totalRec > 4400W (20A single phase) use 3-phase
-  var use3Phase=totalRecW>4400;
+  // Phase suggestion: di atas 1500W direkomendasikan 3-phase untuk pembagian beban
+  var use3Phase=totalRecW>1500;
   var phaseLabel=use3Phase?'3 Phase 380V/220V':'1 Phase 220V';
-  var mainMCBLabel=use3Phase?(Math.ceil(mainAreq/3))+'A x 3P':mainMCB+'A 1P';
+  var mainMCBLabel=mainMCB+'A 1P';
   if(use3Phase){
     var mcb3=mcbStd.find(function(a){return a>=mainAreq/3;})||Math.ceil(mainAreq/3/10)*10;
     mainMCBLabel=mcb3+'A x 3P';
@@ -1256,12 +1334,12 @@ async function exportDatasheetPDF(){
   y=topY+boxH+5;
 
   // ── Cabinet grid grouped by power branch ─────────────────────────────
-  // Build a uniform TOP→BOTTOM column sequence (no zig-zag) so every branch
-  // starts as close to the TOP as possible — titik awal power sejajar di sisi
-  // atas. Each branch becomes a cable loop drawn with arrows.
+  // Build a LEFT→RIGHT, row-by-row sequence so every branch's START POINT
+  // berada di sisi KIRI (kolom 0). Each branch becomes a horizontal cable
+  // loop drawn with arrows — no zig-zag (orthogonal-only).
   var seqOrder=[];
-  for(var pcc=0;pcc<c.qW;pcc++){
-    for(var prr=0;prr<c.qH;prr++) seqOrder.push({c:pcc,r:prr});
+  for(var prr=0;prr<c.qH;prr++){
+    for(var pcc=0;pcc<c.qW;pcc++) seqOrder.push({c:pcc,r:prr});
   }
   var branchRoutes=[], branchOfCab={}, posInBranch={}, idx=0;
   for(var bs2=0;bs2<nBranches;bs2++){
@@ -1411,11 +1489,11 @@ async function exportDatasheetPDF(){
   var notes=[
     'Note: Diagram is schematic. Cabling, grounding, and protection devices must comply with PUIL 2011 / SNI 04-0225.',
     'Use copper conductor sized per branch current (min. 2.5 mm2 for 16A). Provide ELCB/RCD 30mA on each branch for safety.',
-    'For installations exceeding 4400 W, 3-phase supply (380V) is recommended for balanced load distribution.'
+    'Untuk instalasi di atas 1500 W direkomendasikan menggunakan suplai 3-Phase (380V) agar beban listrik terbagi merata antar fasa. Titik awal (start point) listrik dipasang di sisi KIRI setiap branch.'
   ];
   notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
 
-  drawFooter(6,6);
+  drawFooter(7,7);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
