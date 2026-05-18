@@ -1023,7 +1023,7 @@ async function exportDatasheetPDF(){
   y+=3;y=subHdr(y,'TKDN Information');
   y=specRow(y,'Status',p.tkdn,false);
   if(isTKDN&&tkdnMap[p.pitch]) y=specRow(y,'Nilai TKDN',tkdnMap[p.pitch],true);
-  drawFooter(3,6);
+  drawFooter(4,7);
 
   // ── PAGE 4: Cabinet Specification ──────────────────────────────────────────
   doc.addPage();
@@ -1061,7 +1061,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
   doc.text('Tanggal: '+quoDate,PW-MR-4,y+10,{align:'right'});
   doc.text('Datasheet MAXHUB '+p.model,PW-MR-4,y+15,{align:'right'});
-  drawFooter(4,6);
+  drawFooter(5,7);
 
   // ── PAGE 5: Data Flow Drawing ──────────────────────────────────────────────
   doc.addPage();
@@ -1268,7 +1268,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
   doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
-  drawFooter(5,6);
+  drawFooter(6,7);
 
   // ── PAGE 6: Power Flow Drawing ─────────────────────────────────────────────
   doc.addPage();
@@ -1493,7 +1493,7 @@ async function exportDatasheetPDF(){
   ];
   notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
 
-  drawFooter(6,6);
+  drawFooter(7,7);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
