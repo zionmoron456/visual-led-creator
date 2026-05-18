@@ -1226,6 +1226,9 @@ async function exportDatasheetPDF(){
   for(var pr=0;pr<portRoutes.length;pr++){
     for(var k=1;k<portRoutes[pr].length;k++){
       var a=portRoutes[pr][k-1], b=portRoutes[pr][k];
+      // hanya orthogonal-adjacent — hindari diagonal/jump (lebih efisien & rapi)
+      var adjA=(a.c===b.c && Math.abs(a.r-b.r)===1) || (a.r===b.r && Math.abs(a.c-b.c)===1);
+      if(!adjA) continue;
       var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
       var dk=portColor(pr);
       drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
