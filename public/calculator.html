@@ -1471,6 +1471,42 @@ async function exportDatasheetPDF(){
   }
   y+=Math.ceil(nBranches/legCols)*legRowH+3;
 
+  // ── Distribution bus + per-branch MCB feeders ──
+  // Trunk dari Main Panel turun ke bus vertikal di kiri grid, lalu
+  // tiap branch punya MCB feeder ke cabinet pertama (start point).
+  var busX=pgX-9;
+  var mainCx=topX+plnW+gap+mcbW/2;
+  var dropY=pgY-5;
+  doc.setDrawColor(40,40,40);doc.setLineWidth(0.9);
+  doc.line(mainCx,topY+boxH, mainCx,dropY);
+  doc.line(mainCx,dropY, busX,dropY);
+  doc.line(busX,dropY, busX,pgY+pgH-1);
+  // arrow tip at bus bottom
+  doc.setFillColor(40,40,40);
+  doc.triangle(busX-1.2,pgY+pgH-2.5, busX+1.2,pgY+pgH-2.5, busX,pgY+pgH-0.5,'F');
+  // bus label
+  doc.setFont('helvetica','bold');doc.setFontSize(5.5);doc.setTextColor(40,40,40);
+  doc.text('DIST. BUS',busX,dropY-1.4,{align:'center'});
+
+  // Per-branch MCB feeders into START POINT (cabinet kolom pertama branch)
+  for(var bf=0;bf<nBranches;bf++){
+    var fbs=branchRoutes[bf]&&branchRoutes[bf][0]; if(!fbs) continue;
+    var bcyL=pgY+fbs.r*pcabH+pcabH/2;
+    var startX=pgX+fbs.c*pcabW+pcabW/2;
+    var dkF=dkColsP[bf%dkColsP.length];
+    // small MCB rectangle straddling the bus
+    var mcbBW=8, mcbBH=4.2;
+    doc.setFillColor(255,255,255);doc.setDrawColor(dkF[0],dkF[1],dkF[2]);doc.setLineWidth(0.5);
+    doc.rect(busX-mcbBW/2, bcyL-mcbBH/2, mcbBW, mcbBH, 'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(4.4);doc.setTextColor(dkF[0],dkF[1],dkF[2]);
+    doc.text(branchAmpere+'A', busX, bcyL+0.7,{align:'center'});
+    // feeder line from MCB right edge → cabinet start point
+    doc.setDrawColor(dkF[0],dkF[1],dkF[2]);doc.setLineWidth(0.9);
+    doc.line(busX+mcbBW/2, bcyL, startX-2.2, bcyL);
+    // arrow head
+    doc.setFillColor(dkF[0],dkF[1],dkF[2]);
+    doc.triangle(startX-2.2,bcyL-1.3, startX-2.2,bcyL+1.3, startX-0.4,bcyL,'F');
+  }
 
   // ── Specification rows ────────────────────────────────────────────────
   y=secHeader(y,'Power Distribution Specification');
