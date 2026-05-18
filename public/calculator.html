@@ -1405,7 +1405,7 @@ async function exportDatasheetPDF(){
     }
   }
   doc.setDrawColor(80,80,80);doc.setLineWidth(0.4);
-  doc.rect(pgX,pgY,CW,pgH,'S');
+  doc.rect(pgX,pgY,pgW,pgH,'S');
 
   // Power cable loop — serpentine arrows between consecutive cabinets per branch
   function pCellCenter(cc,rr){ return {x:pgX+cc*pcabW+pcabW/2, y:pgY+rr*pcabH+pcabH/2}; }
