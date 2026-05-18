@@ -922,21 +922,99 @@ async function exportDatasheetPDF(){
   doc.text('PRODUCT FEATURES',ML+3,y+4.8);
   y+=9;
   var feats=p.env==='Outdoor'?[
-    {t:'Weather-Proof Design',s:'Fully-enclosed cabinet IP65 front & rear, tahan hujan, debu & UV. Cocok untuk operasi 24/7 outdoor di iklim tropis.'},
-    {t:'Ultra-Bright Display',s:'Kecerahan hingga '+p.brightness+' cd/m² dengan contrast '+p.contrast+' — gambar tetap tajam di bawah sinar matahari langsung.'},
-    {t:'Energy Efficient',s:'Branch-circuit power supply dengan teknologi konversi tegangan efisiensi tinggi, menekan konsumsi daya & panas berlebih.'},
-    {t:'Robust & Lightweight',s:'Kabinet aluminium die-casting '+p.weight+' kg, struktur ringan namun kuat — hemat biaya rangka baja dan ruang instalasi.'},
-    {t:'Smart Remote Control',s:'MaxConfig software + monitoring real-time via PC/Tablet/HP. Publish konten & fault-alarm jarak jauh dengan aman.'},
-    {t:'Certified Quality',s:'Sertifikasi CE, FCC, RoHS & '+(p.tkdn==='TKDN'?'TKDN '+(tkdnMap[p.pitch]||'')+' (Produk Dalam Negeri)':'standar internasional')+' — komponen bebas timbal.'}
+    {k:'shield',t:'Weather-Proof Design',s:'Fully-enclosed cabinet IP65 front & rear, tahan hujan, debu & UV. Cocok untuk operasi 24/7 outdoor di iklim tropis.'},
+    {k:'sun',t:'Ultra-Bright Display',s:'Kecerahan hingga '+p.brightness+' cd/m2 dengan contrast '+p.contrast+' — gambar tetap tajam di bawah sinar matahari langsung.'},
+    {k:'energy',t:'Energy Efficient',s:'Branch-circuit power supply dengan teknologi konversi tegangan efisiensi tinggi, menekan konsumsi daya & panas berlebih.'},
+    {k:'light',t:'Robust & Lightweight',s:'Kabinet aluminium die-casting '+p.weight+' kg, struktur ringan namun kuat — hemat biaya rangka baja dan ruang instalasi.'},
+    {k:'smart',t:'Smart Remote Control',s:'MaxConfig software + monitoring real-time via PC/Tablet/HP. Publish konten & fault-alarm jarak jauh dengan aman.'},
+    {k:'cert',t:'Certified Quality',s:'Sertifikasi CE, FCC, RoHS & '+(p.tkdn==='TKDN'?'TKDN '+(tkdnMap[p.pitch]||'')+' (Produk Dalam Negeri)':'standar internasional')+' — komponen bebas timbal.'}
   ]:[
-    {t:'Ultra-High Refresh Rate',s:'Refresh rate '+p.refresh+' Hz dengan color depth 16-bit — bebas flicker, ideal untuk kamera broadcast & live streaming.'},
-    {t:'Vivid & Accurate Color',s:'Brightness '+p.brightness+' cd/m² · contrast '+p.contrast+' · wide color gamut untuk reproduksi warna presisi & cinematic.'},
-    {t:'Seamless Fine-Pitch',s:'Pixel pitch '+p.pitch.replace('P','')+' mm dengan '+p.ledType+' — gambar mulus tanpa garis tepi, sudut pandang lebar 160°.'},
-    {t:'Slim & Lightweight',s:'Kabinet die-casting aluminium '+p.weight+' kg, ketebalan tipis 31 mm — mudah dipasang flush ke dinding & hemat ruang.'},
-    {t:'Front-Access Maintenance',s:'Modul, power supply & receiving card 100% front-access — perawatan & penggantian cepat tanpa membongkar struktur.'},
-    {t:'Smart Control System',s:'MaxConfig software dengan one-button-on + remote monitoring via PC/Mobile/Tablet. '+(p.tkdn==='TKDN'?'TKDN-certified '+(tkdnMap[p.pitch]||'')+'.':'CE / FCC / RoHS certified.')}
+    {k:'refresh',t:'Ultra-High Refresh Rate',s:'Refresh rate '+p.refresh+' Hz dengan color depth 16-bit — bebas flicker, ideal untuk kamera broadcast & live streaming.'},
+    {k:'color',t:'Vivid & Accurate Color',s:'Brightness '+p.brightness+' cd/m2 · contrast '+p.contrast+' · wide color gamut untuk reproduksi warna presisi & cinematic.'},
+    {k:'seamless',t:'Seamless Fine-Pitch',s:'Pixel pitch '+p.pitch.replace('P','')+' mm dengan '+p.ledType+' — gambar mulus tanpa garis tepi, sudut pandang lebar 160°.'},
+    {k:'light',t:'Slim & Lightweight',s:'Kabinet die-casting aluminium '+p.weight+' kg, ketebalan tipis 31 mm — mudah dipasang flush ke dinding & hemat ruang.'},
+    {k:'tools',t:'Front-Access Maintenance',s:'Modul, power supply & receiving card 100% front-access — perawatan & penggantian cepat tanpa membongkar struktur.'},
+    {k:'smart',t:'Smart Control System',s:'MaxConfig software dengan one-button-on + remote monitoring via PC/Mobile/Tablet. '+(p.tkdn==='TKDN'?'TKDN-certified '+(tkdnMap[p.pitch]||'')+'.':'CE / FCC / RoHS certified.')}
   ];
-  var fCols=2, fColW=(CW-4)/fCols, fH=32;
+  // Icon renderer — semua icon digambar pakai primitif jsPDF (vector, tajam di PDF)
+  function drawFeatIcon(k,cx,cy,sz){
+    var r=sz/2;
+    if(k==='refresh'){
+      doc.setDrawColor(245,130,32);doc.setLineWidth(1.1);
+      // two arc arrows (approx with circles + cut)
+      doc.circle(cx,cy,r*0.78,'S');
+      doc.setFillColor(245,130,32);
+      doc.triangle(cx+r*0.78,cy-r*0.18, cx+r*0.78,cy+r*0.18, cx+r*1.05,cy,'F');
+      doc.triangle(cx-r*0.78,cy+r*0.18, cx-r*0.78,cy-r*0.18, cx-r*1.05,cy,'F');
+    } else if(k==='color'){
+      doc.setFillColor(220,60,60);doc.circle(cx-r*0.35,cy+r*0.18,r*0.55,'F');
+      doc.setFillColor(60,180,80);doc.circle(cx+r*0.35,cy+r*0.18,r*0.55,'F');
+      doc.setFillColor(60,90,220);doc.circle(cx,cy-r*0.32,r*0.55,'F');
+    } else if(k==='seamless'){
+      // 2x2 cabinet grid — no visible seam
+      doc.setFillColor(0,86,179);
+      doc.rect(cx-r*0.85,cy-r*0.85,r*0.82,r*0.82,'F');
+      doc.rect(cx+r*0.03,cy-r*0.85,r*0.82,r*0.82,'F');
+      doc.rect(cx-r*0.85,cy+r*0.03,r*0.82,r*0.82,'F');
+      doc.rect(cx+r*0.03,cy+r*0.03,r*0.82,r*0.82,'F');
+    } else if(k==='light'){
+      // leaf
+      doc.setFillColor(80,180,90);
+      doc.ellipse(cx,cy,r*0.55,r*0.95,'F');
+      doc.setDrawColor(40,120,55);doc.setLineWidth(0.6);
+      doc.line(cx,cy-r*0.85,cx,cy+r*0.95);
+    } else if(k==='tools'){
+      // wrench + screwdriver crossed
+      doc.setDrawColor(230,170,30);doc.setLineWidth(1.6);
+      doc.line(cx-r*0.8,cy-r*0.8, cx+r*0.8,cy+r*0.8);
+      doc.setDrawColor(70,160,170);
+      doc.line(cx-r*0.8,cy+r*0.8, cx+r*0.8,cy-r*0.8);
+      doc.setFillColor(230,170,30);doc.circle(cx-r*0.85,cy-r*0.85,r*0.2,'F');
+      doc.setFillColor(70,160,170);doc.circle(cx-r*0.85,cy+r*0.85,r*0.2,'F');
+    } else if(k==='smart'){
+      // gear with check
+      doc.setFillColor(80,180,170);doc.circle(cx,cy,r*0.85,'F');
+      doc.setFillColor(255,255,255);doc.circle(cx,cy,r*0.45,'F');
+      doc.setDrawColor(40,140,130);doc.setLineWidth(1.4);
+      doc.line(cx-r*0.35,cy, cx-r*0.1,cy+r*0.3);
+      doc.line(cx-r*0.1,cy+r*0.3, cx+r*0.45,cy-r*0.35);
+    } else if(k==='shield'){
+      // shield with check
+      doc.setFillColor(0,120,200);
+      doc.triangle(cx-r*0.85,cy-r*0.7, cx+r*0.85,cy-r*0.7, cx,cy+r*0.95,'F');
+      doc.rect(cx-r*0.85,cy-r*0.95,r*1.7,r*0.3,'F');
+      doc.setDrawColor(255,255,255);doc.setLineWidth(1.3);
+      doc.line(cx-r*0.3,cy, cx-r*0.05,cy+r*0.28);
+      doc.line(cx-r*0.05,cy+r*0.28, cx+r*0.45,cy-r*0.3);
+    } else if(k==='sun'){
+      doc.setFillColor(245,180,40);doc.circle(cx,cy,r*0.55,'F');
+      doc.setDrawColor(245,180,40);doc.setLineWidth(1.2);
+      for(var ri=0;ri<8;ri++){
+        var ang=ri*Math.PI/4;
+        doc.line(cx+Math.cos(ang)*r*0.7, cy+Math.sin(ang)*r*0.7, cx+Math.cos(ang)*r*1.0, cy+Math.sin(ang)*r*1.0);
+      }
+    } else if(k==='energy'){
+      // battery + leaf
+      doc.setFillColor(80,180,90);
+      doc.rect(cx-r*0.85,cy-r*0.6,r*1.4,r*1.2,'F');
+      doc.rect(cx+r*0.55,cy-r*0.25,r*0.2,r*0.5,'F');
+      doc.setFillColor(255,255,255);
+      doc.rect(cx-r*0.7,cy+r*0.2,r*1.1,r*0.3,'F');
+      doc.setFillColor(180,230,100);
+      doc.ellipse(cx+r*0.05,cy-r*0.1,r*0.4,r*0.55,'F');
+    } else if(k==='cert'){
+      // ribbon/medal
+      doc.setFillColor(220,170,40);doc.circle(cx,cy-r*0.1,r*0.7,'F');
+      doc.setFillColor(255,255,255);doc.circle(cx,cy-r*0.1,r*0.38,'F');
+      doc.setDrawColor(180,130,30);doc.setLineWidth(1.2);
+      doc.line(cx-r*0.25,cy-r*0.1, cx-r*0.05,cy+r*0.1);
+      doc.line(cx-r*0.05,cy+r*0.1, cx+r*0.32,cy-r*0.25);
+      doc.setFillColor(200,40,40);
+      doc.triangle(cx-r*0.4,cy+r*0.55, cx,cy+r*0.95, cx-r*0.05,cy+r*0.5,'F');
+      doc.triangle(cx+r*0.4,cy+r*0.55, cx,cy+r*0.95, cx+r*0.05,cy+r*0.5,'F');
+    }
+  }
+  var fCols=2, fColW=(CW-4)/fCols, fH=32, iconSz=14;
   for(var fi=0;fi<feats.length;fi++){
     var fc=fi%fCols, fr=Math.floor(fi/fCols);
     var fx=ML+fc*(fColW+4), fy2=y+fr*(fH+4);
@@ -944,11 +1022,14 @@ async function exportDatasheetPDF(){
     doc.rect(fx,fy2,fColW,fH,'FD');
     // accent bar
     doc.setFillColor(0,86,179);doc.rect(fx,fy2,1.6,fH,'F');
+    // Icon
+    drawFeatIcon(feats[fi].k, fx+4+iconSz/2, fy2+fH/2, iconSz);
+    var textX=fx+4+iconSz+4;
     doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,86,179);
-    doc.text(feats[fi].t,fx+4,fy2+5.5);
+    doc.text(feats[fi].t,textX,fy2+6);
     doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(60,60,60);
-    var fl=doc.splitTextToSize(feats[fi].s,fColW-6);
-    doc.text(fl,fx+4,fy2+10);
+    var fl=doc.splitTextToSize(feats[fi].s,fColW-(textX-fx)-3);
+    doc.text(fl,textX,fy2+10.5);
   }
   drawFooter(2,7);
 
@@ -1129,11 +1210,12 @@ async function exportDatasheetPDF(){
     var portsPerCardCols=portsPerCard*colsPerPort;
     var colsPerCard=Math.max(colsPerPort, Math.min(portsPerCardCols, colsPerCardByPx));
     routePatternLabel=colsPerPort+' full column(s) per port';
+    // Uniform top→bottom traversal for every column so each port's
+    // START POINT selalu di SISI ATAS (efisiensi loop kabel data — no serpentine).
     for(var sc=0; sc<c.qW; sc+=colsPerPort){
       var route=[];
       for(var ci=sc; ci<Math.min(c.qW,sc+colsPerPort); ci++){
-        if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri}); }
-        else        { for(var ri2=c.qH-1; ri2>=0; ri2--) route.push({c:ci,r:ri2}); }
+        for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri});
       }
       var cardIdx=Math.floor(sc/colsPerCard);
       addRoute(route, cardIdx);
@@ -1225,6 +1307,9 @@ async function exportDatasheetPDF(){
   for(var pr=0;pr<portRoutes.length;pr++){
     for(var k=1;k<portRoutes[pr].length;k++){
       var a=portRoutes[pr][k-1], b=portRoutes[pr][k];
+      // hanya orthogonal-adjacent — hindari diagonal/jump (lebih efisien & rapi)
+      var adjA=(a.c===b.c && Math.abs(a.r-b.r)===1) || (a.r===b.r && Math.abs(a.c-b.c)===1);
+      if(!adjA) continue;
       var ca=cellCenter(a.c,a.r), cb=cellCenter(b.c,b.r);
       var dk=portColor(pr);
       drawArrow(ca.x,ca.y,cb.x,cb.y,dk);
@@ -1355,8 +1440,11 @@ async function exportDatasheetPDF(){
   var bgColsP=[[214,242,222],[214,230,250],[250,228,214],[238,222,250],[230,240,214],[250,220,232],[222,242,242],[244,238,210],[226,224,244],[244,228,222],[218,236,232],[244,224,240]];
   var dkColsP=[[34,160,90],[40,100,200],[210,120,40],[140,60,180],[120,170,50],[210,70,140],[40,150,150],[180,150,40],[90,90,200],[200,90,60],[40,140,120],[200,80,170]];
 
-  var pgX=ML, pgY=y;
-  var pcabW=CW/c.qW;
+  // Reserve a strip on the LEFT for the distribution bus + per-branch MCB feeders
+  var busArea=18;
+  var pgX=ML+busArea, pgY=y;
+  var pgW=CW-busArea;
+  var pcabW=pgW/c.qW;
   var pcabH=Math.min(220/c.qH, pcabW*0.62, 22);
   if(pcabH<6) pcabH=6;
   var pgH=pcabH*c.qH;
@@ -1398,7 +1486,7 @@ async function exportDatasheetPDF(){
     }
   }
   doc.setDrawColor(80,80,80);doc.setLineWidth(0.4);
-  doc.rect(pgX,pgY,CW,pgH,'S');
+  doc.rect(pgX,pgY,pgW,pgH,'S');
 
   // Power cable loop — serpentine arrows between consecutive cabinets per branch
   function pCellCenter(cc,rr){ return {x:pgX+cc*pcabW+pcabW/2, y:pgY+rr*pcabH+pcabH/2}; }
@@ -1464,6 +1552,42 @@ async function exportDatasheetPDF(){
   }
   y+=Math.ceil(nBranches/legCols)*legRowH+3;
 
+  // ── Distribution bus + per-branch MCB feeders ──
+  // Trunk dari Main Panel turun ke bus vertikal di kiri grid, lalu
+  // tiap branch punya MCB feeder ke cabinet pertama (start point).
+  var busX=pgX-9;
+  var mainCx=topX+plnW+gap+mcbW/2;
+  var dropY=pgY-5;
+  doc.setDrawColor(40,40,40);doc.setLineWidth(0.9);
+  doc.line(mainCx,topY+boxH, mainCx,dropY);
+  doc.line(mainCx,dropY, busX,dropY);
+  doc.line(busX,dropY, busX,pgY+pgH-1);
+  // arrow tip at bus bottom
+  doc.setFillColor(40,40,40);
+  doc.triangle(busX-1.2,pgY+pgH-2.5, busX+1.2,pgY+pgH-2.5, busX,pgY+pgH-0.5,'F');
+  // bus label
+  doc.setFont('helvetica','bold');doc.setFontSize(5.5);doc.setTextColor(40,40,40);
+  doc.text('DIST. BUS',busX,dropY-1.4,{align:'center'});
+
+  // Per-branch MCB feeders into START POINT (cabinet kolom pertama branch)
+  for(var bf=0;bf<nBranches;bf++){
+    var fbs=branchRoutes[bf]&&branchRoutes[bf][0]; if(!fbs) continue;
+    var bcyL=pgY+fbs.r*pcabH+pcabH/2;
+    var startX=pgX+fbs.c*pcabW+pcabW/2;
+    var dkF=dkColsP[bf%dkColsP.length];
+    // small MCB rectangle straddling the bus
+    var mcbBW=8, mcbBH=4.2;
+    doc.setFillColor(255,255,255);doc.setDrawColor(dkF[0],dkF[1],dkF[2]);doc.setLineWidth(0.5);
+    doc.rect(busX-mcbBW/2, bcyL-mcbBH/2, mcbBW, mcbBH, 'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(4.4);doc.setTextColor(dkF[0],dkF[1],dkF[2]);
+    doc.text(branchAmpere+'A', busX, bcyL+0.7,{align:'center'});
+    // feeder line from MCB right edge → cabinet start point
+    doc.setDrawColor(dkF[0],dkF[1],dkF[2]);doc.setLineWidth(0.9);
+    doc.line(busX+mcbBW/2, bcyL, startX-2.2, bcyL);
+    // arrow head
+    doc.setFillColor(dkF[0],dkF[1],dkF[2]);
+    doc.triangle(startX-2.2,bcyL-1.3, startX-2.2,bcyL+1.3, startX-0.4,bcyL,'F');
+  }
 
   // ── Specification rows ────────────────────────────────────────────────
   y=secHeader(y,'Power Distribution Specification');
