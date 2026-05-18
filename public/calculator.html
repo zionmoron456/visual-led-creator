@@ -1221,10 +1221,10 @@ async function exportDatasheetPDF(){
   var mainAreq=totalRecW/voltAC/0.8;
   var mcbStd=[10,16,20,25,32,40,50,63,80,100,125,160,200,250];
   var mainMCB=mcbStd.find(function(a){return a>=mainAreq;})||Math.ceil(mainAreq/10)*10;
-  // Phase suggestion: if totalRec > 4400W (20A single phase) use 3-phase
-  var use3Phase=totalRecW>4400;
+  // Phase suggestion: di atas 1500W direkomendasikan 3-phase untuk pembagian beban
+  var use3Phase=totalRecW>1500;
   var phaseLabel=use3Phase?'3 Phase 380V/220V':'1 Phase 220V';
-  var mainMCBLabel=use3Phase?(Math.ceil(mainAreq/3))+'A x 3P':mainMCB+'A 1P';
+  var mainMCBLabel=mainMCB+'A 1P';
   if(use3Phase){
     var mcb3=mcbStd.find(function(a){return a>=mainAreq/3;})||Math.ceil(mainAreq/3/10)*10;
     mainMCBLabel=mcb3+'A x 3P';
@@ -1256,12 +1256,12 @@ async function exportDatasheetPDF(){
   y=topY+boxH+5;
 
   // ── Cabinet grid grouped by power branch ─────────────────────────────
-  // Build a uniform TOP→BOTTOM column sequence (no zig-zag) so every branch
-  // starts as close to the TOP as possible — titik awal power sejajar di sisi
-  // atas. Each branch becomes a cable loop drawn with arrows.
+  // Build a LEFT→RIGHT, row-by-row sequence so every branch's START POINT
+  // berada di sisi KIRI (kolom 0). Each branch becomes a horizontal cable
+  // loop drawn with arrows — no zig-zag (orthogonal-only).
   var seqOrder=[];
-  for(var pcc=0;pcc<c.qW;pcc++){
-    for(var prr=0;prr<c.qH;prr++) seqOrder.push({c:pcc,r:prr});
+  for(var prr=0;prr<c.qH;prr++){
+    for(var pcc=0;pcc<c.qW;pcc++) seqOrder.push({c:pcc,r:prr});
   }
   var branchRoutes=[], branchOfCab={}, posInBranch={}, idx=0;
   for(var bs2=0;bs2<nBranches;bs2++){
@@ -1411,7 +1411,7 @@ async function exportDatasheetPDF(){
   var notes=[
     'Note: Diagram is schematic. Cabling, grounding, and protection devices must comply with PUIL 2011 / SNI 04-0225.',
     'Use copper conductor sized per branch current (min. 2.5 mm2 for 16A). Provide ELCB/RCD 30mA on each branch for safety.',
-    'For installations exceeding 4400 W, 3-phase supply (380V) is recommended for balanced load distribution.'
+    'Untuk instalasi di atas 1500 W direkomendasikan menggunakan suplai 3-Phase (380V) agar beban listrik terbagi merata antar fasa. Titik awal (start point) listrik dipasang di sisi KIRI setiap branch.'
   ];
   notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
 
