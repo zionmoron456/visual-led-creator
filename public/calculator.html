@@ -1129,11 +1129,12 @@ async function exportDatasheetPDF(){
     var portsPerCardCols=portsPerCard*colsPerPort;
     var colsPerCard=Math.max(colsPerPort, Math.min(portsPerCardCols, colsPerCardByPx));
     routePatternLabel=colsPerPort+' full column(s) per port';
+    // Uniform top→bottom traversal for every column so each port's
+    // START POINT selalu di SISI ATAS (efisiensi loop kabel data — no serpentine).
     for(var sc=0; sc<c.qW; sc+=colsPerPort){
       var route=[];
       for(var ci=sc; ci<Math.min(c.qW,sc+colsPerPort); ci++){
-        if(ci%2===0){ for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri}); }
-        else        { for(var ri2=c.qH-1; ri2>=0; ri2--) route.push({c:ci,r:ri2}); }
+        for(var ri=0; ri<c.qH; ri++) route.push({c:ci,r:ri});
       }
       var cardIdx=Math.floor(sc/colsPerCard);
       addRoute(route, cardIdx);
