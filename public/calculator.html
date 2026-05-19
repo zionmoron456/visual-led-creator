@@ -686,7 +686,9 @@ function updateCalc(){
   var optView=Math.round(pitchVal*3.0*10)/10;
   lastCalc={p:p,qW:qW,qH:qH,total:total,sW:sW,sH:sH,resW:resW,resH:resH,totalPx:totalPx,diag:diag,powerMax:powerMax,powerAvg:powerAvg,areaSqm:areaSqm,arW:arW,arH:arH,weight:weight,srp:srp,afterDisc:afterDisc,discRate:discRate,discAmt:discAmt,vpKey:vp.key,vpPrice:vpPrice,vpLabel:vpInfo.label,vpPorts:vpInfo.ports||0,hCards:hc,maintTool:maintTool,maintPrice:maintPrice,addons:addons,accessories:accessories,grandTotal:grandTotal};
   vizSyncFromCalc(sW/1000,sH/1000,diag,areaSqm,resW,resH,g);
-  document.getElementById('metrics').innerHTML='<div class="metric"><div class="metric-label">Cabinet W x H</div><div class="metric-value">'+qW+' x '+qH+'</div><div class="metric-sub">'+fmt(total)+' unit total</div></div><div class="metric"><div class="metric-label">Ukuran Aktual</div><div class="metric-value">'+(sW/1000).toFixed(2)+' x '+(sH/1000).toFixed(2)+'</div><div class="metric-sub">meter (W x H)</div></div><div class="metric"><div class="metric-label">Resolusi Total</div><div class="metric-value">'+fmt(resW)+' x '+fmt(resH)+'</div><div class="metric-sub">'+fmt(totalPx)+' pixel</div></div><div class="metric"><div class="metric-label">Berat Total</div><div class="metric-value">'+fmt(weight)+'</div><div class="metric-sub">kilogram</div></div><div class="metric"><div class="metric-label">Jarak Optimal</div><div class="metric-value">'+optView.toFixed(1)+' m</div><div class="metric-sub">pitch '+pitchVal+' mm x 3.0</div></div>';
+  var sWm=sW/1000, sHm=sH/1000, areaM2=sWm*sHm;
+  var fmtDec=function(n){return (Math.round(n*100)/100).toString();};
+  document.getElementById('metrics').innerHTML='<div class="metric"><div class="metric-label">Cabinet W x H</div><div class="metric-value">'+qW+' x '+qH+'</div><div class="metric-sub">'+fmt(total)+' unit total</div></div><div class="metric"><div class="metric-label">Ukuran Aktual</div><div class="metric-value">'+fmtDec(sWm)+' x '+fmtDec(sHm)+' = '+fmtDec(areaM2)+' m&sup2;</div><div class="metric-sub">meter (W x H), luas '+fmtDec(areaM2)+' m&sup2;</div></div><div class="metric"><div class="metric-label">Resolusi Total</div><div class="metric-value">'+fmt(resW)+' x '+fmt(resH)+'</div><div class="metric-sub">'+fmt(totalPx)+' pixel</div></div><div class="metric"><div class="metric-label">Berat Total</div><div class="metric-value">'+fmt(weight)+'</div><div class="metric-sub">kilogram</div></div><div class="metric"><div class="metric-label">Jarak Optimal</div><div class="metric-value">'+optView.toFixed(1)+' m</div><div class="metric-sub">pitch '+pitchVal+' mm x 3.0</div></div>';
   var recPower=Math.round(powerMax*1.3);
   document.getElementById('power-bars').innerHTML='<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Konsumsi Daya</div><div class="power-bar-row"><span class="power-bar-label">Max</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--danger)"></div></div><span class="power-bar-val">'+fmt(powerMax)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Typical</span><div class="power-bar-track"><div class="power-bar-fill" style="width:'+Math.round(powerAvg/powerMax*100)+'%;background:var(--accent)"></div></div><span class="power-bar-val">'+fmt(powerAvg)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Rekomendasi</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--warn);opacity:.7"></div></div><span class="power-bar-val">'+fmt(recPower)+' W</span></div><div style="font-size:11px;color:var(--text3);margin-top:4px">PLN min. '+fmt(recPower)+' W (130% dari max)</div>';
   document.getElementById('warn-box').innerHTML=total<12?'<div class="warn-box">Minimum pembelian 12 cabinet. Saat ini '+total+' cabinet.</div>':'';
@@ -812,7 +814,7 @@ async function exportDatasheetPDF(){
 
   var doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
   var IS_OUTDOOR=(p.env==='Outdoor');
-  var TOTAL_PAGES=IS_OUTDOOR?9:8;
+  var TOTAL_PAGES=IS_OUTDOOR?10:9;
   function cabinetDrawingFor(model){
     if(/^CN27/.test(model)) return '/products/Cabinet_Drawing_CN27.jpg';
     if(/^EF27/.test(model)) return '/products/Cabinet_Drawing_EF27.jpg';
@@ -822,6 +824,16 @@ async function exportDatasheetPDF(){
     if(/^GH31/.test(model)) return '/products/Cabinet_Drawing_GH31.jpg';
     if(/^GV27/.test(model)) return '/products/Cabinet_Drawing_GV27.jpg';
     return '/products/Cabinet_Drawing_Outdoor.jpg';
+  }
+  function mechanicalDrawingFor(model){
+    if(/^CN27/.test(model)) return '/products/Mechanical_Drawing_CN27.jpg';
+    if(/^EF27/.test(model)) return '/products/Mechanical_Drawing_EF27.jpg';
+    if(/^VT-808-COB/.test(model)) return '/products/Mechanical_Drawing_VT808_COB.jpg';
+    if(/^VT-808-25/.test(model)) return '/products/Mechanical_Drawing_VT808_25PX.jpg';
+    if(/^VT-808/.test(model)) return '/products/Mechanical_Drawing_VT808.jpg';
+    if(/^GH31/.test(model)) return '/products/Mechanical_Drawing_GH31.jpg';
+    if(/^GV27/.test(model)) return '/products/Mechanical_Drawing_GV27.jpg';
+    return '/products/Mechanical_Drawing_Outdoor.jpg';
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
@@ -886,25 +898,7 @@ async function exportDatasheetPDF(){
   });
   drawFooter(1,TOTAL_PAGES);
 
-  // ── PAGE 2: Product Features ──────────────────────────────────────────────
-  doc.addPage();
-  drawHeader('Product Features');
-  y=MT+4;
-  // Brand bar
-  doc.setFillColor(0,86,179);doc.rect(ML,y,CW,11,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);
-  doc.text('MAXHUB '+p.model,ML+4,y+7.4);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
-  doc.text(p.env.toUpperCase()+' LED VIDEOTRON  ·  PIXEL PITCH '+p.pitch.replace('P','')+' mm',PW-MR-4,y+7.4,{align:'right'});
-  y+=14;
-  // Tagline
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(0,0,0);
-  var tagline=p.env==='Outdoor'
-    ? 'Ultra-Bright & Weather-Proof Outdoor LED Display Solution'
-    : 'High-Refresh, Seamless & Vivid Indoor LED Display Solution';
-  doc.text(tagline,PW/2,y+5,{align:'center'});
-  y+=10;
-  // Product photo
+  // helpers used across pages
   function productPhotoFor(model){
     if(/^CN27/.test(model)) return '/products/CN27.jpg';
     if(/^EF27/.test(model)) return '/products/EF27.jpg';
@@ -920,130 +914,15 @@ async function exportDatasheetPDF(){
       return await new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=rej;fr.readAsDataURL(b);});
     }catch(e){return null;}
   }
+
+  // ── PAGE 2: Full-page Product Photo (no header/footer) ────────────────────
+  doc.addPage();
   try{
-    var photo=await loadImgDataURL(productPhotoFor(p.model));
-    if(photo){
-      var phW=130, phH=46;
-      doc.addImage(photo,'JPEG',ML+(CW-phW)/2,y,phW,phH);
-      y+=phH+4;
+    var photoFull=await loadImgDataURL(productPhotoFor(p.model));
+    if(photoFull){
+      doc.addImage(photoFull,'JPEG',0,0,PW,PH);
     }
-  }catch(e){ y+=4; }
-  // Features grid 2 x 3
-  doc.setFillColor(0,86,179);doc.rect(ML,y,CW,7,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(255,255,255);
-  doc.text('PRODUCT FEATURES',ML+3,y+4.8);
-  y+=9;
-  var feats=p.env==='Outdoor'?[
-    {k:'shield',t:'Weather-Proof Design',s:'Fully-enclosed cabinet IP65 front & rear, tahan hujan, debu & UV. Cocok untuk operasi 24/7 outdoor di iklim tropis.'},
-    {k:'sun',t:'Ultra-Bright Display',s:'Kecerahan hingga '+p.brightness+' cd/m2 dengan contrast '+p.contrast+' — gambar tetap tajam di bawah sinar matahari langsung.'},
-    {k:'energy',t:'Energy Efficient',s:'Branch-circuit power supply dengan teknologi konversi tegangan efisiensi tinggi, menekan konsumsi daya & panas berlebih.'},
-    {k:'light',t:'Robust & Lightweight',s:'Kabinet aluminium die-casting '+p.weight+' kg, struktur ringan namun kuat — hemat biaya rangka baja dan ruang instalasi.'},
-    {k:'smart',t:'Smart Remote Control',s:'MaxConfig software + monitoring real-time via PC/Tablet/HP. Publish konten & fault-alarm jarak jauh dengan aman.'},
-    {k:'cert',t:'Certified Quality',s:'Sertifikasi CE, FCC, RoHS & '+(p.tkdn==='TKDN'?'TKDN '+(tkdnMap[p.pitch]||'')+' (Produk Dalam Negeri)':'standar internasional')+' — komponen bebas timbal.'}
-  ]:[
-    {k:'refresh',t:'Ultra-High Refresh Rate',s:'Refresh rate '+p.refresh+' Hz dengan color depth 16-bit — bebas flicker, ideal untuk kamera broadcast & live streaming.'},
-    {k:'color',t:'Vivid & Accurate Color',s:'Brightness '+p.brightness+' cd/m2 · contrast '+p.contrast+' · wide color gamut untuk reproduksi warna presisi & cinematic.'},
-    {k:'seamless',t:'Seamless Fine-Pitch',s:'Pixel pitch '+p.pitch.replace('P','')+' mm dengan '+p.ledType+' — gambar mulus tanpa garis tepi, sudut pandang lebar 160°.'},
-    {k:'light',t:'Slim & Lightweight',s:'Kabinet die-casting aluminium '+p.weight+' kg, ketebalan tipis 31 mm — mudah dipasang flush ke dinding & hemat ruang.'},
-    {k:'tools',t:'Front-Access Maintenance',s:'Modul, power supply & receiving card 100% front-access — perawatan & penggantian cepat tanpa membongkar struktur.'},
-    {k:'smart',t:'Smart Control System',s:'MaxConfig software dengan one-button-on + remote monitoring via PC/Mobile/Tablet. '+(p.tkdn==='TKDN'?'TKDN-certified '+(tkdnMap[p.pitch]||'')+'.':'CE / FCC / RoHS certified.')}
-  ];
-  // Icon renderer — semua icon digambar pakai primitif jsPDF (vector, tajam di PDF)
-  function drawFeatIcon(k,cx,cy,sz){
-    var r=sz/2;
-    if(k==='refresh'){
-      doc.setDrawColor(245,130,32);doc.setLineWidth(1.1);
-      // two arc arrows (approx with circles + cut)
-      doc.circle(cx,cy,r*0.78,'S');
-      doc.setFillColor(245,130,32);
-      doc.triangle(cx+r*0.78,cy-r*0.18, cx+r*0.78,cy+r*0.18, cx+r*1.05,cy,'F');
-      doc.triangle(cx-r*0.78,cy+r*0.18, cx-r*0.78,cy-r*0.18, cx-r*1.05,cy,'F');
-    } else if(k==='color'){
-      doc.setFillColor(220,60,60);doc.circle(cx-r*0.35,cy+r*0.18,r*0.55,'F');
-      doc.setFillColor(60,180,80);doc.circle(cx+r*0.35,cy+r*0.18,r*0.55,'F');
-      doc.setFillColor(60,90,220);doc.circle(cx,cy-r*0.32,r*0.55,'F');
-    } else if(k==='seamless'){
-      // 2x2 cabinet grid — no visible seam
-      doc.setFillColor(0,86,179);
-      doc.rect(cx-r*0.85,cy-r*0.85,r*0.82,r*0.82,'F');
-      doc.rect(cx+r*0.03,cy-r*0.85,r*0.82,r*0.82,'F');
-      doc.rect(cx-r*0.85,cy+r*0.03,r*0.82,r*0.82,'F');
-      doc.rect(cx+r*0.03,cy+r*0.03,r*0.82,r*0.82,'F');
-    } else if(k==='light'){
-      // leaf
-      doc.setFillColor(80,180,90);
-      doc.ellipse(cx,cy,r*0.55,r*0.95,'F');
-      doc.setDrawColor(40,120,55);doc.setLineWidth(0.6);
-      doc.line(cx,cy-r*0.85,cx,cy+r*0.95);
-    } else if(k==='tools'){
-      // wrench + screwdriver crossed
-      doc.setDrawColor(230,170,30);doc.setLineWidth(1.6);
-      doc.line(cx-r*0.8,cy-r*0.8, cx+r*0.8,cy+r*0.8);
-      doc.setDrawColor(70,160,170);
-      doc.line(cx-r*0.8,cy+r*0.8, cx+r*0.8,cy-r*0.8);
-      doc.setFillColor(230,170,30);doc.circle(cx-r*0.85,cy-r*0.85,r*0.2,'F');
-      doc.setFillColor(70,160,170);doc.circle(cx-r*0.85,cy+r*0.85,r*0.2,'F');
-    } else if(k==='smart'){
-      // gear with check
-      doc.setFillColor(80,180,170);doc.circle(cx,cy,r*0.85,'F');
-      doc.setFillColor(255,255,255);doc.circle(cx,cy,r*0.45,'F');
-      doc.setDrawColor(40,140,130);doc.setLineWidth(1.4);
-      doc.line(cx-r*0.35,cy, cx-r*0.1,cy+r*0.3);
-      doc.line(cx-r*0.1,cy+r*0.3, cx+r*0.45,cy-r*0.35);
-    } else if(k==='shield'){
-      // shield with check
-      doc.setFillColor(0,120,200);
-      doc.triangle(cx-r*0.85,cy-r*0.7, cx+r*0.85,cy-r*0.7, cx,cy+r*0.95,'F');
-      doc.rect(cx-r*0.85,cy-r*0.95,r*1.7,r*0.3,'F');
-      doc.setDrawColor(255,255,255);doc.setLineWidth(1.3);
-      doc.line(cx-r*0.3,cy, cx-r*0.05,cy+r*0.28);
-      doc.line(cx-r*0.05,cy+r*0.28, cx+r*0.45,cy-r*0.3);
-    } else if(k==='sun'){
-      doc.setFillColor(245,180,40);doc.circle(cx,cy,r*0.55,'F');
-      doc.setDrawColor(245,180,40);doc.setLineWidth(1.2);
-      for(var ri=0;ri<8;ri++){
-        var ang=ri*Math.PI/4;
-        doc.line(cx+Math.cos(ang)*r*0.7, cy+Math.sin(ang)*r*0.7, cx+Math.cos(ang)*r*1.0, cy+Math.sin(ang)*r*1.0);
-      }
-    } else if(k==='energy'){
-      // battery + leaf
-      doc.setFillColor(80,180,90);
-      doc.rect(cx-r*0.85,cy-r*0.6,r*1.4,r*1.2,'F');
-      doc.rect(cx+r*0.55,cy-r*0.25,r*0.2,r*0.5,'F');
-      doc.setFillColor(255,255,255);
-      doc.rect(cx-r*0.7,cy+r*0.2,r*1.1,r*0.3,'F');
-      doc.setFillColor(180,230,100);
-      doc.ellipse(cx+r*0.05,cy-r*0.1,r*0.4,r*0.55,'F');
-    } else if(k==='cert'){
-      // ribbon/medal
-      doc.setFillColor(220,170,40);doc.circle(cx,cy-r*0.1,r*0.7,'F');
-      doc.setFillColor(255,255,255);doc.circle(cx,cy-r*0.1,r*0.38,'F');
-      doc.setDrawColor(180,130,30);doc.setLineWidth(1.2);
-      doc.line(cx-r*0.25,cy-r*0.1, cx-r*0.05,cy+r*0.1);
-      doc.line(cx-r*0.05,cy+r*0.1, cx+r*0.32,cy-r*0.25);
-      doc.setFillColor(200,40,40);
-      doc.triangle(cx-r*0.4,cy+r*0.55, cx,cy+r*0.95, cx-r*0.05,cy+r*0.5,'F');
-      doc.triangle(cx+r*0.4,cy+r*0.55, cx,cy+r*0.95, cx+r*0.05,cy+r*0.5,'F');
-    }
-  }
-  var fCols=2, fColW=(CW-4)/fCols, fH=32, iconSz=14;
-  for(var fi=0;fi<feats.length;fi++){
-    var fc=fi%fCols, fr=Math.floor(fi/fCols);
-    var fx=ML+fc*(fColW+4), fy2=y+fr*(fH+4);
-    doc.setFillColor(245,248,253);doc.setDrawColor(0,86,179);doc.setLineWidth(0.4);
-    doc.rect(fx,fy2,fColW,fH,'FD');
-    // accent bar
-    doc.setFillColor(0,86,179);doc.rect(fx,fy2,1.6,fH,'F');
-    // Icon
-    drawFeatIcon(feats[fi].k, fx+4+iconSz/2, fy2+fH/2, iconSz);
-    var textX=fx+4+iconSz+4;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,86,179);
-    doc.text(feats[fi].t,textX,fy2+6);
-    doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(60,60,60);
-    var fl=doc.splitTextToSize(feats[fi].s,fColW-(textX-fx)-3);
-    doc.text(fl,textX,fy2+10.5);
-  }
-  drawFooter(2,TOTAL_PAGES);
+  }catch(e){}
 
   // ── PAGE 3: LED Configuration Rendering ───────────────────────────────────
   doc.addPage();
@@ -1179,8 +1058,31 @@ async function exportDatasheetPDF(){
   doc.text('All dimensions in mm. Drawing for reference only; refer to factory datasheet for installation tolerances.',ML,y+9);
   drawFooter(6,TOTAL_PAGES);
 
+  // ── PAGE 7: Mechanical Drawing ─────────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Mechanical Drawing');
+  y=MT+4;
+  doc.setFillColor(0,60,140);doc.rect(ML,y,CW,10,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text('Mechanical Installation Drawing — MAXHUB '+p.model,ML+4,y+6.8);
+  y+=14;
+  try{
+    var mdImg=await loadImgDataURL(mechanicalDrawingFor(p.model));
+    if(mdImg){
+      var mdW=CW, mdH=200;
+      doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(ML,y,mdW,mdH);
+      doc.addImage(mdImg,'JPEG',ML+2,y+2,mdW-4,mdH-4);
+      y+=mdH+4;
+    }
+  }catch(e){ y+=4; }
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(0,0,0);
+  doc.text('Installation elevation, side view & wall-mounting assembly. Screen: '+sW+' x '+sH+' mm.',ML,y+4);
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('All dimensions in mm. Refer to factory datasheet for fastener torque & installation tolerances.',ML,y+9);
+  drawFooter(7,TOTAL_PAGES);
+
   if(IS_OUTDOOR){
-    // ── PAGE 7: Frame Kit Drawing (Outdoor only) ────────────────────────────
+    // ── PAGE 8: Frame Kit Drawing (Outdoor only) ────────────────────────────
     doc.addPage();
     drawHeader('Frame Kit Drawing');
     y=MT+4;
@@ -1201,7 +1103,7 @@ async function exportDatasheetPDF(){
     doc.text('Components: Short Hanging Bar (1199 mm), Long Hanging Bar (1799 mm), Hook, Connection Plate.',ML,y+4);
     doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
     doc.text('All dimensions in mm. Frame kit ensures secure outdoor installation and modular cabinet alignment.',ML,y+9);
-    drawFooter(7,TOTAL_PAGES);
+    drawFooter(8,TOTAL_PAGES);
   }
 
   // ── PAGE: Data Flow Drawing ────────────────────────────────────────────────
@@ -1413,7 +1315,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
   doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
-  drawFooter(IS_OUTDOOR?8:7,TOTAL_PAGES);
+  drawFooter(IS_OUTDOOR?9:8,TOTAL_PAGES);
 
   // ── PAGE 6: Power Flow Drawing ─────────────────────────────────────────────
   doc.addPage();
@@ -1677,7 +1579,7 @@ async function exportDatasheetPDF(){
   ];
   notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
 
-  drawFooter(IS_OUTDOOR?9:8,TOTAL_PAGES);
+  drawFooter(IS_OUTDOOR?10:9,TOTAL_PAGES);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
