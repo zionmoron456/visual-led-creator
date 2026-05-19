@@ -1315,7 +1315,7 @@ async function exportDatasheetPDF(){
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
   doc.text('Note: Each RJ45 route is capped below 650,000 pixels; for 6-high P1.2, ports use 5 vertical cabinets then the remaining row is grouped horizontally.',ML,y);
 
-  drawFooter(IS_OUTDOOR?8:7,TOTAL_PAGES);
+  drawFooter(IS_OUTDOOR?9:8,TOTAL_PAGES);
 
   // ── PAGE 6: Power Flow Drawing ─────────────────────────────────────────────
   doc.addPage();
@@ -1579,7 +1579,7 @@ async function exportDatasheetPDF(){
   ];
   notes.forEach(function(n){var lines=doc.splitTextToSize(n,CW);doc.text(lines,ML,y);y+=lines.length*3.6;});
 
-  drawFooter(IS_OUTDOOR?9:8,TOTAL_PAGES);
+  drawFooter(IS_OUTDOOR?10:9,TOTAL_PAGES);
 
   doc.save('Datasheet_MAXHUB_'+p.model+'_'+c.qW+'x'+c.qH+'cab.pdf');
 }
