@@ -686,7 +686,9 @@ function updateCalc(){
   var optView=Math.round(pitchVal*3.0*10)/10;
   lastCalc={p:p,qW:qW,qH:qH,total:total,sW:sW,sH:sH,resW:resW,resH:resH,totalPx:totalPx,diag:diag,powerMax:powerMax,powerAvg:powerAvg,areaSqm:areaSqm,arW:arW,arH:arH,weight:weight,srp:srp,afterDisc:afterDisc,discRate:discRate,discAmt:discAmt,vpKey:vp.key,vpPrice:vpPrice,vpLabel:vpInfo.label,vpPorts:vpInfo.ports||0,hCards:hc,maintTool:maintTool,maintPrice:maintPrice,addons:addons,accessories:accessories,grandTotal:grandTotal};
   vizSyncFromCalc(sW/1000,sH/1000,diag,areaSqm,resW,resH,g);
-  document.getElementById('metrics').innerHTML='<div class="metric"><div class="metric-label">Cabinet W x H</div><div class="metric-value">'+qW+' x '+qH+'</div><div class="metric-sub">'+fmt(total)+' unit total</div></div><div class="metric"><div class="metric-label">Ukuran Aktual</div><div class="metric-value">'+(sW/1000).toFixed(2)+' x '+(sH/1000).toFixed(2)+'</div><div class="metric-sub">meter (W x H)</div></div><div class="metric"><div class="metric-label">Resolusi Total</div><div class="metric-value">'+fmt(resW)+' x '+fmt(resH)+'</div><div class="metric-sub">'+fmt(totalPx)+' pixel</div></div><div class="metric"><div class="metric-label">Berat Total</div><div class="metric-value">'+fmt(weight)+'</div><div class="metric-sub">kilogram</div></div><div class="metric"><div class="metric-label">Jarak Optimal</div><div class="metric-value">'+optView.toFixed(1)+' m</div><div class="metric-sub">pitch '+pitchVal+' mm x 3.0</div></div>';
+  var sWm=sW/1000, sHm=sH/1000, areaM2=sWm*sHm;
+  var fmtDec=function(n){return (Math.round(n*100)/100).toString();};
+  document.getElementById('metrics').innerHTML='<div class="metric"><div class="metric-label">Cabinet W x H</div><div class="metric-value">'+qW+' x '+qH+'</div><div class="metric-sub">'+fmt(total)+' unit total</div></div><div class="metric"><div class="metric-label">Ukuran Aktual</div><div class="metric-value">'+fmtDec(sWm)+' x '+fmtDec(sHm)+' = '+fmtDec(areaM2)+' m&sup2;</div><div class="metric-sub">meter (W x H), luas '+fmtDec(areaM2)+' m&sup2;</div></div><div class="metric"><div class="metric-label">Resolusi Total</div><div class="metric-value">'+fmt(resW)+' x '+fmt(resH)+'</div><div class="metric-sub">'+fmt(totalPx)+' pixel</div></div><div class="metric"><div class="metric-label">Berat Total</div><div class="metric-value">'+fmt(weight)+'</div><div class="metric-sub">kilogram</div></div><div class="metric"><div class="metric-label">Jarak Optimal</div><div class="metric-value">'+optView.toFixed(1)+' m</div><div class="metric-sub">pitch '+pitchVal+' mm x 3.0</div></div>';
   var recPower=Math.round(powerMax*1.3);
   document.getElementById('power-bars').innerHTML='<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Konsumsi Daya</div><div class="power-bar-row"><span class="power-bar-label">Max</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--danger)"></div></div><span class="power-bar-val">'+fmt(powerMax)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Typical</span><div class="power-bar-track"><div class="power-bar-fill" style="width:'+Math.round(powerAvg/powerMax*100)+'%;background:var(--accent)"></div></div><span class="power-bar-val">'+fmt(powerAvg)+' W</span></div><div class="power-bar-row"><span class="power-bar-label">Rekomendasi</span><div class="power-bar-track"><div class="power-bar-fill" style="width:100%;background:var(--warn);opacity:.7"></div></div><span class="power-bar-val">'+fmt(recPower)+' W</span></div><div style="font-size:11px;color:var(--text3);margin-top:4px">PLN min. '+fmt(recPower)+' W (130% dari max)</div>';
   document.getElementById('warn-box').innerHTML=total<12?'<div class="warn-box">Minimum pembelian 12 cabinet. Saat ini '+total+' cabinet.</div>':'';
@@ -812,7 +814,7 @@ async function exportDatasheetPDF(){
 
   var doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
   var IS_OUTDOOR=(p.env==='Outdoor');
-  var TOTAL_PAGES=IS_OUTDOOR?9:8;
+  var TOTAL_PAGES=IS_OUTDOOR?10:9;
   function cabinetDrawingFor(model){
     if(/^CN27/.test(model)) return '/products/Cabinet_Drawing_CN27.jpg';
     if(/^EF27/.test(model)) return '/products/Cabinet_Drawing_EF27.jpg';
@@ -822,6 +824,16 @@ async function exportDatasheetPDF(){
     if(/^GH31/.test(model)) return '/products/Cabinet_Drawing_GH31.jpg';
     if(/^GV27/.test(model)) return '/products/Cabinet_Drawing_GV27.jpg';
     return '/products/Cabinet_Drawing_Outdoor.jpg';
+  }
+  function mechanicalDrawingFor(model){
+    if(/^CN27/.test(model)) return '/products/Mechanical_Drawing_CN27.jpg';
+    if(/^EF27/.test(model)) return '/products/Mechanical_Drawing_EF27.jpg';
+    if(/^VT-808-COB/.test(model)) return '/products/Mechanical_Drawing_VT808_COB.jpg';
+    if(/^VT-808-25/.test(model)) return '/products/Mechanical_Drawing_VT808_25PX.jpg';
+    if(/^VT-808/.test(model)) return '/products/Mechanical_Drawing_VT808.jpg';
+    if(/^GH31/.test(model)) return '/products/Mechanical_Drawing_GH31.jpg';
+    if(/^GV27/.test(model)) return '/products/Mechanical_Drawing_GV27.jpg';
+    return '/products/Mechanical_Drawing_Outdoor.jpg';
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
