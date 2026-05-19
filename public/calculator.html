@@ -1058,8 +1058,31 @@ async function exportDatasheetPDF(){
   doc.text('All dimensions in mm. Drawing for reference only; refer to factory datasheet for installation tolerances.',ML,y+9);
   drawFooter(6,TOTAL_PAGES);
 
+  // ── PAGE 7: Mechanical Drawing ─────────────────────────────────────────────
+  doc.addPage();
+  drawHeader('Mechanical Drawing');
+  y=MT+4;
+  doc.setFillColor(0,60,140);doc.rect(ML,y,CW,10,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text('Mechanical Installation Drawing — MAXHUB '+p.model,ML+4,y+6.8);
+  y+=14;
+  try{
+    var mdImg=await loadImgDataURL(mechanicalDrawingFor(p.model));
+    if(mdImg){
+      var mdW=CW, mdH=200;
+      doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(ML,y,mdW,mdH);
+      doc.addImage(mdImg,'JPEG',ML+2,y+2,mdW-4,mdH-4);
+      y+=mdH+4;
+    }
+  }catch(e){ y+=4; }
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(0,0,0);
+  doc.text('Installation elevation, side view & wall-mounting assembly. Screen: '+sW+' x '+sH+' mm.',ML,y+4);
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('All dimensions in mm. Refer to factory datasheet for fastener torque & installation tolerances.',ML,y+9);
+  drawFooter(7,TOTAL_PAGES);
+
   if(IS_OUTDOOR){
-    // ── PAGE 7: Frame Kit Drawing (Outdoor only) ────────────────────────────
+    // ── PAGE 8: Frame Kit Drawing (Outdoor only) ────────────────────────────
     doc.addPage();
     drawHeader('Frame Kit Drawing');
     y=MT+4;
@@ -1080,7 +1103,7 @@ async function exportDatasheetPDF(){
     doc.text('Components: Short Hanging Bar (1199 mm), Long Hanging Bar (1799 mm), Hook, Connection Plate.',ML,y+4);
     doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
     doc.text('All dimensions in mm. Frame kit ensures secure outdoor installation and modular cabinet alignment.',ML,y+9);
-    drawFooter(7,TOTAL_PAGES);
+    drawFooter(8,TOTAL_PAGES);
   }
 
   // ── PAGE: Data Flow Drawing ────────────────────────────────────────────────
